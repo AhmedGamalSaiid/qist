@@ -1,0 +1,174 @@
+<script>
+  var STRINGS = {
+    en: {
+      appName: 'Income Sheet Companion',
+      navHome: 'Home', navAdd: 'Add', navInstallments: 'Installments', navMore: 'More',
+      moreAccounts: 'Accounts', moreRates: 'Rates', moreNetWorth: 'Net Worth',
+      moreTotal: 'Total & Investment', moreHistory: 'History', moreTransactions: 'Transactions',
+      moreSettings: 'Settings',
+
+      loading: 'Loading your data…', cantReach: "Can't reach your sheet.", retry: 'Retry',
+      dataAsOf: 'Data as of', refresh: 'Refresh',
+
+      netWorth: 'Net Worth', totalAssets: 'Total Assets', liquid: 'Liquid', investments: 'Investments',
+      nextInstallmentDue: 'Next Installment', overdueCount: 'Overdue', dueNext12: 'Due Next 12 Months',
+      usdRate: 'USD/EGP Rate', shortTermLiabilities: 'Short-Term Liabilities', remainingInstallments: 'Remaining Installments',
+      assetMix: 'Asset Mix', unpaidByYear: 'Unpaid Installments by Year',
+      daysLeft: '{n} days left', dueToday: 'Due today', overdueBy: '{n} days overdue',
+
+      typeIncome: 'Income', typeExpense: 'Expense', typeTransfer: 'Transfer',
+      account: 'Account', amount: 'Amount', date: 'Date', noteOptional: 'Note (optional)',
+      correctionsHint: "Made a mistake? Log a counter-entry — transactions can't be edited or deleted.",
+      submit: 'Submit', recentTransactions: 'Recent Transactions',
+      categorySalary: 'Salary', categoryFreelance: 'Freelance', categoryFood: 'Food',
+      categoryTransport: 'Transport', categoryRent: 'Rent', categoryUtilities: 'Utilities',
+      categoryShopping: 'Shopping', categoryHealth: 'Health', categoryEducation: 'Education',
+      categoryEntertainment: 'Entertainment', categoryInstallment: 'Installment',
+      categoryInvestment: 'Investment', categoryOther: 'Other',
+
+      installments: 'Installments', totalScheduled: 'Total Scheduled', totalPaid: 'Total Paid',
+      totalRemaining: 'Total Remaining', nextDue: 'Next Due', due3m: 'Due 3mo', due6m: 'Due 6mo', due12m: 'Due 12mo',
+      groupOverdue: 'Overdue', groupDueSoon: 'Due Soon', groupUpcoming: 'Upcoming', groupPaid: 'Paid',
+      markPaidConfirm: 'Mark "{name}" ({amount}) as paid?', noneHere: 'Nothing here.',
+
+      accounts: 'Accounts', addAccount: 'Add Account', name: 'Name', category: 'Category',
+      investmentFlag: 'Investment', editAmount: 'Edit',
+
+      rates: 'Rates', usd: 'USD/EGP', gold: 'Gold (EGP/gram)', silver: 'Silver (EGP/gram)', asOf: 'as of', save: 'Save',
+
+      liabilities: 'Liabilities', totals: 'Totals', investment: 'Investment',
+      credit: 'Credit', totalOfAll: 'Total of All', nativeAmount: 'Native',
+
+      netWorthOverTime: 'Net Worth Over Time', snapshots: 'Snapshots', takeSnapshot: 'Take snapshot',
+      takeSnapshotConfirm: 'Take a net-worth snapshot now?',
+
+      transactions: 'Transactions', noMatches: 'No matching transactions.',
+      filterAllMonths: 'All months', filterAllTypes: 'All types', filterAllCategories: 'All categories',
+      monthIncome: 'Income', monthExpenses: 'Expenses', monthNetSaved: 'Net Saved', monthSavingsRate: 'Savings Rate',
+
+      openSheet: 'Open Google Sheet', language: 'Language', about: 'About',
+      aboutText: 'Income Sheet Companion is a mobile companion for your personal-finance Google Sheet. It works online only — there is no offline mode. Add it to your home screen for quick access.',
+
+      cancel: 'Cancel', confirm: 'Confirm',
+      toastSaved: 'Saved.', toastFailed: 'Could not save — try again.',
+      toastValidation: 'Please check: {msg}', toastLogFull: 'The transaction log is full — extend the sheet.',
+      toastLockTimeout: 'The sheet is busy — try again.', toastRangeDenied: 'That change was rejected for safety.',
+      toastDuplicateName: 'An account with that name already exists.',
+      toastStructureChanged: "The sheet's structure changed — please check it.",
+      toastStale: 'Your last write may not have synced — refresh to check.',
+      toastSnapshotTaken: 'Snapshot saved.',
+
+      requiredField: 'This field is required.', mustBePositive: 'Must be a number greater than 0.',
+      mustBeNonNegative: 'Must be a number of 0 or more.'
+    },
+    ar: {
+      appName: 'رفيق شيت الدخل',
+      navHome: 'الرئيسية', navAdd: 'إضافة', navInstallments: 'الأقساط', navMore: 'المزيد',
+      moreAccounts: 'الحسابات', moreRates: 'الأسعار', moreNetWorth: 'صافي الثروة',
+      moreTotal: 'الإجمالي والاستثمار', moreHistory: 'السجل التاريخي', moreTransactions: 'المعاملات',
+      moreSettings: 'الإعدادات',
+
+      loading: 'جارٍ تحميل بياناتك…', cantReach: 'تعذّر الوصول إلى الشيت.', retry: 'إعادة المحاولة',
+      dataAsOf: 'البيانات حتى', refresh: 'تحديث',
+
+      netWorth: 'صافي الثروة', totalAssets: 'إجمالي الأصول', liquid: 'السيولة', investments: 'الاستثمارات',
+      nextInstallmentDue: 'القسط القادم', overdueCount: 'متأخر', dueNext12: 'مستحق خلال 12 شهرًا',
+      usdRate: 'سعر الدولار/الجنيه', shortTermLiabilities: 'الالتزامات قصيرة الأجل', remainingInstallments: 'الأقساط المتبقية',
+      assetMix: 'توزيع الأصول', unpaidByYear: 'الأقساط غير المدفوعة حسب السنة',
+      daysLeft: 'باقي {n} يومًا', dueToday: 'مستحق اليوم', overdueBy: 'متأخر {n} يومًا',
+
+      typeIncome: 'دخل', typeExpense: 'مصروف', typeTransfer: 'تحويل',
+      account: 'الحساب', amount: 'المبلغ', date: 'التاريخ', noteOptional: 'ملاحظة (اختياري)',
+      correctionsHint: 'أخطأت؟ سجّل حركة معاكسة — لا يمكن تعديل أو حذف المعاملات.',
+      submit: 'إرسال', recentTransactions: 'أحدث المعاملات',
+      categorySalary: 'راتب', categoryFreelance: 'عمل حر', categoryFood: 'طعام',
+      categoryTransport: 'مواصلات', categoryRent: 'إيجار', categoryUtilities: 'مرافق',
+      categoryShopping: 'تسوق', categoryHealth: 'صحة', categoryEducation: 'تعليم',
+      categoryEntertainment: 'ترفيه', categoryInstallment: 'قسط',
+      categoryInvestment: 'استثمار', categoryOther: 'أخرى',
+
+      installments: 'الأقساط', totalScheduled: 'إجمالي المجدول', totalPaid: 'إجمالي المدفوع',
+      totalRemaining: 'إجمالي المتبقي', nextDue: 'الاستحقاق القادم', due3m: 'خلال 3 أشهر', due6m: 'خلال 6 أشهر', due12m: 'خلال 12 شهرًا',
+      groupOverdue: 'متأخر', groupDueSoon: 'مستحق قريبًا', groupUpcoming: 'قادم', groupPaid: 'مدفوع',
+      markPaidConfirm: 'تحديد "{name}" ({amount}) كمدفوع؟', noneHere: 'لا يوجد شيء هنا.',
+
+      accounts: 'الحسابات', addAccount: 'إضافة حساب', name: 'الاسم', category: 'الفئة',
+      investmentFlag: 'استثمار', editAmount: 'تعديل',
+
+      rates: 'الأسعار', usd: 'الدولار/الجنيه', gold: 'الذهب (جنيه/جرام)', silver: 'الفضة (جنيه/جرام)', asOf: 'حتى', save: 'حفظ',
+
+      liabilities: 'الالتزامات', totals: 'الإجماليات', investment: 'الاستثمار',
+      credit: 'الائتمان', totalOfAll: 'إجمالي الكل', nativeAmount: 'بالعملة الأصلية',
+
+      netWorthOverTime: 'صافي الثروة عبر الزمن', snapshots: 'اللقطات', takeSnapshot: 'أخذ لقطة',
+      takeSnapshotConfirm: 'أخذ لقطة لصافي الثروة الآن؟',
+
+      transactions: 'المعاملات', noMatches: 'لا توجد معاملات مطابقة.',
+      filterAllMonths: 'كل الأشهر', filterAllTypes: 'كل الأنواع', filterAllCategories: 'كل الفئات',
+      monthIncome: 'الدخل', monthExpenses: 'المصروفات', monthNetSaved: 'صافي المدخر', monthSavingsRate: 'معدل الادخار',
+
+      openSheet: 'فتح شيت جوجل', language: 'اللغة', about: 'حول التطبيق',
+      aboutText: 'رفيق شيت الدخل هو رفيق للهاتف لشيت جوجل الخاص بماليتك الشخصية. يعمل أونلاين فقط — لا يوجد وضع عدم اتصال. أضفه إلى الشاشة الرئيسية للوصول السريع.',
+
+      cancel: 'إلغاء', confirm: 'تأكيد',
+      toastSaved: 'تم الحفظ.', toastFailed: 'تعذّر الحفظ — حاول مرة أخرى.',
+      toastValidation: 'يرجى التحقق: {msg}', toastLogFull: 'سجل المعاملات ممتلئ — يرجى توسيع الشيت.',
+      toastLockTimeout: 'الشيت مشغول — حاول مرة أخرى.', toastRangeDenied: 'تم رفض هذا التغيير لأسباب أمان.',
+      toastDuplicateName: 'يوجد حساب بهذا الاسم بالفعل.',
+      toastStructureChanged: 'تغيّر هيكل الشيت — يرجى التحقق منه.',
+      toastStale: 'قد لا يكون آخر تعديل قد تمت مزامنته — قم بالتحديث للتأكد.',
+      toastSnapshotTaken: 'تم حفظ اللقطة.',
+
+      requiredField: 'هذا الحقل مطلوب.', mustBePositive: 'يجب أن يكون رقمًا أكبر من 0.',
+      mustBeNonNegative: 'يجب أن يكون رقمًا 0 أو أكبر.'
+    }
+  };
+
+  var CATEGORY_KEYS = [
+    ['Salary', 'categorySalary'], ['Freelance', 'categoryFreelance'], ['Food', 'categoryFood'],
+    ['Transport', 'categoryTransport'], ['Rent', 'categoryRent'], ['Utilities', 'categoryUtilities'],
+    ['Shopping', 'categoryShopping'], ['Health', 'categoryHealth'], ['Education', 'categoryEducation'],
+    ['Entertainment', 'categoryEntertainment'], ['Installment', 'categoryInstallment'],
+    ['Investment', 'categoryInvestment'], ['Other', 'categoryOther']
+  ];
+
+  function t(key, vars) {
+    var lang = (window.store && store.lang) || 'en';
+    var dict = STRINGS[lang] || STRINGS.en;
+    var str = dict[key] || STRINGS.en[key] || key;
+    if (vars) {
+      Object.keys(vars).forEach(function (k) {
+        str = str.replace('{' + k + '}', vars[k]);
+      });
+    }
+    return str;
+  }
+
+  function fmt(n) {
+    if (n === null || n === undefined || isNaN(n)) n = 0;
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);
+  }
+
+  function fmtUsd(n) {
+    if (n === null || n === undefined || isNaN(n)) n = 0;
+    return '$' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var parts = String(iso).split('-');
+    if (parts.length !== 3) return String(iso);
+    return parts[1] + '/' + parts[2] + '/' + parts[0];
+  }
+
+  function applyLanguage(lang) {
+    store.lang = lang;
+    localStorage.setItem('isc:lang', lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-t]').forEach(function (el) {
+      el.textContent = t(el.getAttribute('data-t'));
+    });
+    if (typeof renderActiveScreen === 'function') renderActiveScreen();
+  }
+</script>

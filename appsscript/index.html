@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('styles') ?>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <span class="topbar-title" data-t="appName">Income Sheet Companion</span>
+      <span class="topbar-asof" id="asOfIndicator"></span>
+    </header>
+
+    <main id="screens">
+
+      <!-- Home ----------------------------------------------------------->
+      <section class="screen" id="screen-home" data-screen="home">
+        <div class="kpi-grid" id="homeKpiGrid"></div>
+        <div class="card chart-card">
+          <h2 data-t="assetMix">Asset Mix</h2>
+          <canvas id="chartAssetMix" height="220"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h2 data-t="unpaidByYear">Unpaid Installments by Year</h2>
+          <canvas id="chartUnpaidByYear" height="220"></canvas>
+        </div>
+      </section>
+
+      <!-- Add Transaction -------------------------------------------------->
+      <section class="screen" id="screen-add" data-screen="add">
+        <form class="card form" id="addForm">
+          <div class="segmented" id="typeToggle" role="tablist">
+            <button type="button" class="segmented-btn" data-value="Income" data-t="typeIncome">Income</button>
+            <button type="button" class="segmented-btn" data-value="Expense" data-t="typeExpense">Expense</button>
+            <button type="button" class="segmented-btn" data-value="Transfer" data-t="typeTransfer">Transfer</button>
+          </div>
+
+          <div class="chip-grid" id="categoryChips"></div>
+
+          <label class="field">
+            <span data-t="account">Account</span>
+            <select id="accountSelect" class="editable" required></select>
+          </label>
+
+          <div class="field-row">
+            <label class="field grow">
+              <span data-t="amount">Amount</span>
+              <input type="text" inputmode="decimal" id="amountInput" class="editable" required>
+            </label>
+            <div class="segmented small" id="currencyToggle">
+              <button type="button" class="segmented-btn" data-value="EGP">EGP</button>
+              <button type="button" class="segmented-btn" data-value="USD">USD</button>
+            </div>
+          </div>
+
+          <label class="field">
+            <span data-t="date">Date</span>
+            <input type="date" id="dateInput" class="editable" required>
+          </label>
+
+          <label class="field">
+            <span data-t="noteOptional">Note (optional)</span>
+            <input type="text" id="noteInput" class="editable" maxlength="500">
+          </label>
+
+          <p class="hint" data-t="correctionsHint">Made a mistake? Log a counter-entry — transactions can't be edited or deleted.</p>
+
+          <button type="submit" class="btn-primary" data-t="submit">Submit</button>
+        </form>
+
+        <div class="card">
+          <h2 data-t="recentTransactions">Recent Transactions</h2>
+          <ul class="list" id="recentTransactionsList"></ul>
+        </div>
+      </section>
+
+      <!-- Installments ------------------------------------------------------>
+      <section class="screen" id="screen-installments" data-screen="installments">
+        <div class="card" id="installmentsSummary"></div>
+        <div id="installmentGroups"></div>
+      </section>
+
+      <!-- Accounts ----------------------------------------------------------->
+      <section class="screen" id="screen-accounts" data-screen="accounts">
+        <div class="card">
+          <h2 data-t="accounts">Accounts</h2>
+          <ul class="list" id="accountsList"></ul>
+        </div>
+        <div class="card">
+          <h2 data-t="addAccount">Add Account</h2>
+          <form class="form" id="addAccountForm">
+            <label class="field">
+              <span data-t="name">Name</span>
+              <input type="text" id="accNameInput" class="editable" required>
+            </label>
+            <label class="field">
+              <span data-t="category">Category</span>
+              <!-- The sheet's own dropdown values, written verbatim to Data!B.
+                   Shown untranslated in both languages, like every other value
+                   read from the sheet (account names, liability names, months). -->
+              <select id="accCategorySelect" class="editable" required>
+                <option value="USD">USD</option>
+                <option value="EGP">EGP</option>
+                <option value="Gold">Gold</option>
+                <option value="Silver">Silver</option>
+                <option value="Liability">Liability</option>
+              </select>
+            </label>
+            <label class="field checkbox-field">
+              <input type="checkbox" id="accInvestmentInput" class="editable">
+              <span data-t="investmentFlag">Investment</span>
+            </label>
+            <label class="field">
+              <span data-t="amount">Amount</span>
+              <input type="text" inputmode="decimal" id="accAmountInput" class="editable" required>
+            </label>
+            <label class="field">
+              <span data-t="date">Date</span>
+              <input type="date" id="accDateInput" class="editable">
+            </label>
+            <button type="submit" class="btn-primary" data-t="addAccount">Add Account</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Rates --------------------------------------------------------------->
+      <section class="screen" id="screen-rates" data-screen="rates">
+        <div class="card" id="ratesCard"></div>
+      </section>
+
+      <!-- Net Worth ------------------------------------------------------------>
+      <section class="screen" id="screen-networth" data-screen="networth">
+        <div class="card">
+          <h2 data-t="netWorth">Net Worth</h2>
+          <ul class="list" id="netWorthList"></ul>
+        </div>
+      </section>
+
+      <!-- Total & Investment ---------------------------------------------------->
+      <section class="screen" id="screen-total" data-screen="total">
+        <div class="card">
+          <h2 data-t="totals">Totals</h2>
+          <div class="table-scroll">
+            <table class="table" id="totalsTable"></table>
+          </div>
+          <ul class="list" id="liabilitiesList"></ul>
+        </div>
+        <div class="card">
+          <h2 data-t="investment">Investment</h2>
+          <div class="kpi-grid" id="investmentCards"></div>
+        </div>
+      </section>
+
+      <!-- History ----------------------------------------------------------------->
+      <section class="screen" id="screen-history" data-screen="history">
+        <div class="card chart-card">
+          <h2 data-t="netWorthOverTime">Net Worth Over Time</h2>
+          <canvas id="chartHistory" height="220"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header-row">
+            <h2 data-t="snapshots">Snapshots</h2>
+            <button type="button" class="btn-secondary" id="takeSnapshotBtn" data-t="takeSnapshot">Take snapshot</button>
+          </div>
+          <div class="table-scroll">
+            <table class="table" id="historyTable"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Transactions ------------------------------------------------------------->
+      <section class="screen" id="screen-transactions" data-screen="transactions">
+        <div class="card">
+          <div class="filter-row">
+            <select id="filterMonth" class="filter-select"></select>
+            <select id="filterType" class="filter-select"></select>
+            <select id="filterCategory" class="filter-select"></select>
+          </div>
+        </div>
+        <div class="kpi-grid" id="monthlySummaryCards"></div>
+        <div class="card">
+          <h2 data-t="transactions">Transactions</h2>
+          <ul class="list" id="transactionsFullList"></ul>
+          <p class="empty-state hidden" id="transactionsEmptyState" data-t="noMatches">No matching transactions.</p>
+        </div>
+      </section>
+
+      <!-- Settings ------------------------------------------------------------------>
+      <section class="screen" id="screen-settings" data-screen="settings">
+        <div class="card">
+          <button type="button" class="btn-secondary full" id="refreshBtn" data-t="refresh">Refresh</button>
+          <a class="btn-secondary full" id="openSheetLink" target="_blank" rel="noopener" data-t="openSheet">Open Google Sheet</a>
+        </div>
+        <div class="card">
+          <h2 data-t="language">Language</h2>
+          <div class="segmented" id="languageToggle">
+            <button type="button" class="segmented-btn" data-value="en">English</button>
+            <button type="button" class="segmented-btn" data-value="ar">العربية</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2 data-t="about">About</h2>
+          <p data-t="aboutText">Income Sheet Companion is a mobile companion for your personal-finance Google Sheet. It works online only — there is no offline mode. Add it to your home screen for quick access.</p>
+        </div>
+      </section>
+
+      <!-- More menu ------------------------------------------------------------------>
+      <section class="screen" id="screen-more" data-screen="more">
+        <div class="card">
+          <ul class="list nav-list" id="moreMenuList"></ul>
+        </div>
+      </section>
+
+      <!-- Load / error states --------------------------------------------------------->
+      <section class="screen" id="screen-loading" data-screen="loading">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p data-t="loading">Loading your data…</p>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-error" data-screen="error">
+        <div class="error-state">
+          <p data-t="cantReach">Can't reach your sheet.</p>
+          <button type="button" class="btn-primary" id="retryBtn" data-t="retry">Retry</button>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="bottom-nav">
+      <button type="button" class="nav-btn" data-nav="home">
+        <span class="nav-icon">🏠</span><span data-t="navHome">Home</span>
+      </button>
+      <button type="button" class="nav-btn" data-nav="add">
+        <span class="nav-icon">➕</span><span data-t="navAdd">Add</span>
+      </button>
+      <button type="button" class="nav-btn" data-nav="installments">
+        <span class="nav-icon">📅</span><span data-t="navInstallments">Installments</span>
+      </button>
+      <button type="button" class="nav-btn" data-nav="more">
+        <span class="nav-icon">☰</span><span data-t="navMore">More</span>
+      </button>
+    </nav>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <div class="confirm-overlay hidden" id="confirmOverlay">
+      <div class="confirm-dialog">
+        <p id="confirmMessage"></p>
+        <div class="confirm-actions">
+          <button type="button" class="btn-secondary" id="confirmCancel" data-t="cancel">Cancel</button>
+          <button type="button" class="btn-primary" id="confirmOk" data-t="confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+          integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <?!= include('i18n-js') ?>
+  <?!= include('app-js') ?>
+</body>
+</html>

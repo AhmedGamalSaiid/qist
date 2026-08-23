@@ -1,0 +1,21 @@
+# clasp credentials — never commit these (they are OAuth tokens for the
+# Google account that owns the sheet)
+.clasprc.json
+**/.clasprc.json
+
+# Node (clasp is installed globally, but keep these out if that ever changes)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Environment / secrets
+.env
+.env.*
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+.idea/
+.vscode/
