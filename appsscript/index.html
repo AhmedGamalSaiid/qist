@@ -18,11 +18,15 @@
         <div class="kpi-grid" id="homeKpiGrid"></div>
         <div class="card chart-card">
           <h2 data-t="assetMix">Asset Mix</h2>
-          <canvas id="chartAssetMix" height="220"></canvas>
+          <div class="chart-frame chart-frame--dial">
+            <canvas id="chartAssetMix"></canvas>
+          </div>
         </div>
         <div class="card chart-card">
           <h2 data-t="unpaidByYear">Unpaid Installments by Year</h2>
-          <canvas id="chartUnpaidByYear" height="220"></canvas>
+          <div class="chart-frame chart-frame--series">
+            <canvas id="chartUnpaidByYear"></canvas>
+          </div>
         </div>
       </section>
 
@@ -155,7 +159,9 @@
       <section class="screen" id="screen-history" data-screen="history">
         <div class="card chart-card">
           <h2 data-t="netWorthOverTime">Net Worth Over Time</h2>
-          <canvas id="chartHistory" height="220"></canvas>
+          <div class="chart-frame chart-frame--series">
+            <canvas id="chartHistory"></canvas>
+          </div>
         </div>
         <div class="card">
           <div class="card-header-row">

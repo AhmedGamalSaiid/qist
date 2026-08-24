@@ -193,7 +193,11 @@
     config.options.plugins.legend = Object.assign({ rtl: isArabic, textDirection: isArabic ? 'rtl' : 'ltr' }, config.options.plugins.legend || {});
     config.options.plugins.tooltip = Object.assign({ rtl: isArabic, textDirection: isArabic ? 'rtl' : 'ltr' }, config.options.plugins.tooltip || {});
     config.options.responsive = true;
+    // Requires a height-constrained parent (.chart-frame) — see styles.html.
     config.options.maintainAspectRatio = false;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      config.options.animation = false;
+    }
     charts[canvasId] = new Chart(canvas.getContext('2d'), config);
   }
 

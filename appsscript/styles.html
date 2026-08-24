@@ -91,7 +91,29 @@
   }
   .card-header-row h2 { margin: 0; }
 
-  .chart-card canvas { max-width: 100%; }
+  /* Chart.js runs with responsive:true + maintainAspectRatio:false, which makes
+     it size the canvas to its PARENT and ignore any height attribute. Without a
+     height-constrained parent the plot area collapses to nothing and only the
+     legend draws. Every canvas therefore needs a frame with a real height.
+     A dial (doughnut) wants near-square room; a time series reads wide and
+     short, so they get different heights rather than one arbitrary number. */
+  .chart-frame {
+    position: relative;
+    width: 100%;
+  }
+  .chart-frame > canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .chart-frame--dial   { height: 250px; }
+  .chart-frame--series { height: 210px; }
+
+  @media (min-width: 600px) {
+    .chart-frame--dial   { height: 300px; }
+    .chart-frame--series { height: 260px; }
+  }
 
   /* ------------------------------------------------------------------- KPI */
   .kpi-grid {
