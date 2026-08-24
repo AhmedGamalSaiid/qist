@@ -292,7 +292,9 @@ function readDashboard_(ss) {
     nextInstallment: nextRow ? { date: toIso_(nextRow[1]), amount: toNumber_(nextRow[2]) } : { date: null, amount: 0 },
     dueNext12Months: num_(byLabel, /due next 12/i),
     overdueCount: num_(byLabel, /overdue/i),
-    usdRate: num_(byLabel, /usd\/?egp|usd rate/i),
+    // Dashboard!A12 reads "USD / EGP rate" with spaces around the slash, so the
+    // separator has to tolerate whitespace or this silently reports 0.
+    usdRate: num_(byLabel, /usd\s*\/?\s*egp|usd\s+rate/i),
     assetMix: assetMix,
     unpaidByYear: unpaidByYear
   };
