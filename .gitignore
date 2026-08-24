@@ -3,6 +3,11 @@
 .clasprc.json
 **/.clasprc.json
 
+# clasp project binding — holds a concrete scriptId, so committing it points
+# every clone's `clasp push` at the owner's bound Apps Script project.
+# Copy .clasp.json.example to .clasp.json and fill in your own scriptId.
+.clasp.json
+
 # Node (clasp is installed globally, but keep these out if that ever changes)
 node_modules/
 npm-debug.log*

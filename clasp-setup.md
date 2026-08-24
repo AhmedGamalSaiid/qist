@@ -48,8 +48,9 @@ clasp clone <SCRIPT_ID> --rootDir appsscript
 If `appsscript/` already has files in it (from this repo's own commits) and
 `clasp clone` refuses to run, use the pull form instead:
 
-1. Edit `.clasp.json` at the repo root and put your real Script ID in place
-   of `<SCRIPT_ID>`.
+1. Copy `.clasp.json.example` to `.clasp.json` at the repo root and put your
+   real Script ID in place of `<SCRIPT_ID>`. `.clasp.json` is gitignored — it
+   binds the repo to one specific Apps Script project, so it stays local.
 2. Run:
 
    ```sh

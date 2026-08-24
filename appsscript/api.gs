@@ -709,20 +709,20 @@ function setPropertyPaid(row, value) {
 
 /**
  * T034 — copies the History live row's current values as static values into
- * the first empty row after the "SNAPSHOTS ↓" marker. Reuses the existing
- * addSnapshot() global from Code.gs when present (research R10); otherwise
- * mirrors its behavior here without editing Code.gs.
+ * the first empty row after the "SNAPSHOTS ↓" marker.
+ *
+ * Deliberately does NOT delegate to Code.gs's addSnapshot(). That global writes
+ * with appendRow(), which bypasses guardedWrite()/WRITE_ALLOWLIST, ignores the
+ * "SNAPSHOTS ↓" marker, and records recomputed Net Worth sums rather than a copy
+ * of the live row — so whether Code.gs happened to be present would silently
+ * change both the destination and the meaning of a snapshot.
  */
 function takeSnapshot() {
   return withLock_(function () {
-    if (typeof addSnapshot === 'function') {
-      addSnapshot();
-    } else {
-      var sh = sheet_('History');
-      var liveRow = sh.getRange('A2:G2').getValues()[0];
-      var targetRow = firstEmptySnapshotRow_();
-      guardedWrite('takeSnapshot', 'History', 'A' + targetRow + ':G' + targetRow, [liveRow]);
-    }
+    var sh = sheet_('History');
+    var liveRow = sh.getRange('A2:G2').getValues()[0];
+    var targetRow = firstEmptySnapshotRow_();
+    guardedWrite('takeSnapshot', 'History', 'A' + targetRow + ':G' + targetRow, [liveRow]);
     return { history: readHistory_(SpreadsheetApp.getActive()) };
   });
 }
