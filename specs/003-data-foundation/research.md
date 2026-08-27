@@ -172,9 +172,28 @@ as a parameter rather than reading a clock inside a derivation also makes every
 `TODAY()`-dependent function deterministic and therefore testable, which
 matters for `Installments!H5:H10` and the overdue rules.
 
-**This dump is safe**: taken at 13:06 Cairo / 03:06 LA, both 2026-08-27, so its
-`TODAY()`-derived values are internally consistent. Golden tests pin
-today = `2026-08-27`.
+**This dump is safe — but that must be checked, not assumed.** It was taken at
+13:06 Cairo / 03:06 LA, both 2026-08-27, so its `TODAY()`-derived values are
+internally consistent. Golden tests pin today = `2026-08-27`.
+
+The safety is a property of *when this extraction happened*, not of the
+extraction process, and nothing currently enforces it. The dump's recorded
+timezone is still `America/Los_Angeles` — the sheet was never switched to
+`Africa/Cairo` before extraction — so a re-extraction taken during the ten
+hours the two disagree would silently produce a dump whose `TODAY()`-dependent
+figures are internally inconsistent, with no symptom until goldens fail for
+reasons that look like code defects.
+
+**The importer and the reconciler therefore run a preflight** (FR-048): read
+the dump's timezone and extraction timestamp, and refuse to proceed unless both
+timezones place the extraction on the same calendar date. Four lines of check
+that convert a latent, intermittent, misattributed failure into a refusal with
+a reason.
+
+Concretely, for this dump: `2026-08-27T10:06:31Z` is 2026-08-27 in both zones,
+so the preflight passes. The single transaction is a live illustration of the
+risk — it is stamped `2026-08-24T21:00:00.000Z`, which is 24 August in Los
+Angeles and 25 August in Cairo.
 
 **Alternatives rejected**: reading the system clock inside derivations (makes
 them untestable and time-dependent); using the requesting device's timezone
@@ -192,8 +211,44 @@ Running tests against in-process SQLite keeps the suite fast and offline;
 Wrangler's local D1 covers the binding itself. Hand-editing generated
 migrations breaks the ability to regenerate them from schema.
 
-**Caveat to carry into implementation**: D1 does not support interactive
-transactions the way a local SQLite driver does. Multi-statement atomicity uses
-batched statements. Any code path relying on `BEGIN`/`COMMIT` semantics
-available locally but not on D1 must be caught before feature 004 deploys —
-FR-014 depends on it. Flagged for the tasks phase.
+### R9a — Atomicity across D1 and local SQLite
+
+**This was previously left as a caveat "flagged for the tasks phase". It is
+resolved here instead**, because Principle II (ledger integrity) is
+non-waivable and the plan's Constitution Check claims writes happen "inside a
+transaction". An unresolved caveat cannot support that claim, and the
+divergence is not discoverable late: it is a difference in the *shape* of every
+write path, so finding it at deploy time would mean rewriting the data layer.
+
+**Decision**: the data layer exposes exactly one write primitive —
+
+```
+atomically(statements: Statement[]) → Promise<void>
+```
+
+— which takes a **pre-built array of statements** and never a callback. On D1
+it is `db.batch()`; locally it is `better-sqlite3`'s transaction wrapper over
+the same array. Both are all-or-nothing.
+
+**Rationale**: D1 has no interactive transactions. A callback-style
+`transaction(async tx => …)` works locally and cannot be implemented on D1,
+so accepting a callback anywhere would let code be written that passes every
+local test and fails only in a Worker. Taking an array makes the restriction
+structural: there is no way to express a read-then-decide-then-write cycle
+inside the atom, because the statements must all exist before the atom opens.
+
+**What this costs**: any logic that needs to read before deciding what to write
+does the read *before* calling `atomically`, and encodes its decision as a
+conditional statement — a `WHERE` clause, or an `INSERT … WHERE NOT EXISTS`.
+The `reverses_id` cycle walk and the importer's upserts are both written this
+way. This is a real constraint on how the data layer is written, and it is why
+it is settled now rather than discovered later.
+
+**Verification**: the isolation and import suites run twice in CI — once
+against `better-sqlite3` and once against Wrangler's local D1 — from the same
+test bodies. A path that only works on one is a failure, not a caveat.
+
+**Alternatives rejected**: a callback API with a documented "don't do this on
+D1" note (documentation does not prevent it, and the failure appears only in
+production); deferring the decision to feature 004 (the write paths are built
+here, so the constraint has to shape them here).

@@ -227,9 +227,26 @@ by supplying the other household's identifier directly as input.
 - **FR-002**: System MUST refuse to import an incomplete or truncated dump, and
   MUST state what was missing.
 - **FR-003**: The import MUST be idempotent: running it more than once produces
-  the same result as running it once, with no duplicated records.
+  the same result as running it once, with no duplicated records. Idempotency
+  MUST come from identifiers derived deterministically from each record's
+  natural key, not from a post-hoc duplicate check — a randomly generated
+  identifier cannot satisfy SC-006.
 - **FR-004**: System MUST preserve non-Latin text exactly through extraction,
   import, and reporting.
+- **FR-005a**: The import MUST be atomic: either every record lands or none
+  does. A partially applied import is neither idempotent nor safe to reconcile
+  against.
+- **FR-044**: Every value the source records MUST be imported, including values
+  no formula in the source reads. A value the source stores but never
+  displays MUST NOT be discarded on the grounds that no figure depends on it.
+- **FR-045**: Where an imported value is deliberately excluded from a computed
+  figure, the exclusion MUST be expressed as an explicit rule over a modelled
+  attribute, and the excluded value MUST be reported. It MUST NOT rest on the
+  value failing to match a string comparison.
+- **FR-046**: Monetary expected values used to verify the port MUST be taken
+  from the source's stored values, never from its formatted display strings.
+- **FR-047**: A monetary amount MUST be stored with the currency it is
+  denominated in. No monetary column may assume a currency by convention.
 
 **Fidelity**
 
@@ -309,8 +326,16 @@ by supplying the other household's identifier directly as input.
 
 - **FR-038**: A rate MUST be stored as a dated record. Recording a new rate
   MUST create a new record and MUST NOT modify an existing one.
-- **FR-039**: An automated rate fetch MUST write a dated record through the
-  same path as a manual entry, and MUST be attributable as an automated actor.
+- **FR-039**: A rate recorded by an automated fetch MUST be written through the
+  same path as a manual entry and MUST be attributable as an automated actor
+  (`source = 'fetch'`). **This feature delivers the path, not the scheduler.**
+  The write path, the `fetch` source value and its attribution are in scope and
+  are tested by writing a rate as the automated actor. The scheduled trigger
+  that calls it is a deployed artifact and is deferred to the feature that
+  first deploys a Worker — see *Deferred* below. Until then rates are recorded
+  with `source = 'manual'` or `'imported'`, which FR-038 and FR-041 already
+  make correct and reproducible; nothing downstream depends on the fetch being
+  automatic.
 - **FR-040**: A failed or skipped fetch MUST NOT silently reuse the previous
   rate as though it were current. The age of the rate in use MUST be
   determinable wherever a converted figure is shown.
@@ -337,6 +362,11 @@ by supplying the other household's identifier directly as input.
   status, due windows, date stamps applied on write — MUST use it.
 - **FR-035**: A date-dependent figure MUST NOT depend on the timezone of the
   device requesting it.
+- **FR-048**: Before importing or reconciling, the system MUST verify that the
+  dump's recorded timezone and its extraction timestamp place the extraction on
+  the same calendar date under both the source timezone and the canonical
+  household timezone. If they disagree, it MUST refuse to proceed and say so.
+  Every `TODAY()`-dependent figure in the dump is otherwise unverifiable.
 
 **Rate history**
 
@@ -487,6 +517,14 @@ reproducible. Replaced by a scheduled fetch that writes a dated rate record
 through the same path as a manual entry. Convenience retained, history and
 reproducibility gained. FR-038 through FR-041.
 
+**Split across features.** The defect being corrected is *the live lookup*, and
+killing that is entirely within this feature: once rates are dated records,
+`Rates!B2`'s recalculation-drift is gone and every figure is reproducible. The
+*scheduling* is a separate concern that needs a deployment target this feature
+does not build. Shipping the record model now and the trigger later leaves no
+intermediate state that is wrong — only one that is manual. Reversing the order
+would be impossible, since there is nothing for a scheduler to write into.
+
 ### D6 — Historical conversion → **frozen at the transaction date**
 
 A USD transaction is converted once, at the rate in force when it happened, and
@@ -494,6 +532,34 @@ never restated. The spreadsheet restates every past transaction whenever the
 market moves. With exactly one transaction in the system, correcting this now
 costs nothing and will never be cheaper. The resulting difference from the
 spreadsheet is an accepted divergence, not a failure. FR-042 through FR-044.
+
+### D7 — Liability-account balances → **imported, and reported as unreachable**
+
+Discovered while verifying the plan against the dump, after the first draft of
+this spec.
+
+The `Data` tab's class dropdown permits `Liability` alongside the four asset
+classes, and two rows use it: `ADIB C.C` at **600 EGP** and `HSBC C.C` at 0.
+No formula on any tab reads them. Every total is a `SUMIFS` matching a literal
+asset-class string — `Total!J2` is
+`SUMIFS(Data!D:D, Data!B:B, "EGP", Data!C:C, FALSE())` — so a row classed
+`Liability` matches nothing and vanishes from every figure in the workbook.
+
+The 600 EGP is therefore **recorded but invisible**: the owner typed it into
+the sheet, and no number the sheet displays reflects it. It is not double-
+counted either — the short-term liabilities list at `Total!I4:J10` carries
+`CC ADIB` and `CC HSBC` at 0, separately from these rows.
+
+**Decision**: import both rows faithfully as accounts of kind `liability`, keep
+them out of asset totals *deliberately* rather than by string-match accident,
+and have the reconciliation report state the unreachable balance explicitly.
+
+This is **not** registered as a divergence, because no computed figure changes:
+the sheet excludes these rows and so do we, so every total still reconciles
+exactly. What changes is that the balance stops being silently lost. Whether
+600 EGP is a real outstanding card balance that should join the short-term
+liabilities list is a question about the owner's data, not about the port, and
+this feature must not answer it by guessing. FR-044, FR-045.
 
 ### Q3 — Historical snapshots → **imported verbatim**
 
@@ -506,6 +572,18 @@ dates the rates required no longer exist. It is a historical fact, not a cached
 calculation — which is why FR-012 exempts it from the derive-don't-store rule.
 
 Covered by FR-032 and FR-033.
+
+## Deferred
+
+Deliberately out of scope for this feature, recorded so the boundary is a
+decision rather than an omission.
+
+| Deferred | Why | Where it lands |
+|---|---|---|
+| The **scheduled** rate fetch (FR-039) | Needs a deployed Worker and a Cron trigger; this feature ships no deployment. The write path, the `fetch` source and its attribution are delivered and tested here — only the trigger is deferred. | The first feature that deploys a Worker |
+| Reconciling the three spellings of the two credit cards — `Data!A13:A14`, `CC Payments!H7:H8`, `Total!I4:I5` | Merging them requires knowing which represents the real balance. That is a question about the owner's data, and guessing moves money. | An owner decision, surfaced by the D7 report line |
+| `cards.limit_minor`, `statement_day`, `due_day` | The source records no value. Inventing one would store a fabricated fact. | Whenever the owner supplies them |
+| The including-installments figure for the single imported snapshot | Never recorded historically and not recoverable from the dump. | Not recoverable; app-created snapshots record both from cutover on |
 
 ## Discovered During Extraction
 
@@ -534,6 +612,22 @@ Findings from `dumpSummary()` on 2026-08-27 that shape this feature.
   net-worth figures, with a literal `SNAPSHOTS ↓` separator beneath it. It MUST
   be excluded from import: storing it would persist a derived value and violate
   FR-012.
+- **The `Data` tab has a fifth class, `Liability`, and two rows use it.** The
+  dropdown permits it alongside the four asset classes. `ADIB C.C` holds 600
+  EGP and no formula in the workbook reads it — every total is a `SUMIFS` on a
+  literal asset-class string, so these rows match nothing anywhere. The balance
+  is recorded and invisible (D7).
+- **`CC Payments` is not the empty tab it appears to be.** Its payment rows are
+  blank, but a settings block to the right holds the salary amount (2250), the
+  salary currency (**USD**), the pay day (27) and four named cards. Reading
+  only columns A–F would silently discard all of it.
+- **Ten of the 56 installments carry fractional EGP amounts** (14,752.80 and
+  29,505.60), so every installment summary lands on a non-zero piastre.
+  Expected values taken from the sheet's *displayed* figures are wrong by tens
+  of piastres, and the error is invisible at EGP resolution.
+- **The one transaction is stamped `2026-08-24T21:00:00.000Z`** — 24 August in
+  Los Angeles, 25 August in Cairo. The timezone conflict is not hypothetical;
+  it already straddles the workbook's only transaction.
 - **Reconciliation must pin the USD rate** to the value captured in the dump
   (50.2554). The spreadsheet's rate is a live market lookup, so every figure
   downstream of it changes between recalculations; unpinned, golden tests fail

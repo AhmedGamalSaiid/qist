@@ -2,8 +2,33 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-08-27
-**Last validated**: 2026-08-27 (after clarification round)
+**Last validated**: 2026-08-27 (after cross-artifact review against the dump)
 **Feature**: [spec.md](../spec.md)
+
+## Validation history
+
+| Round | Outcome |
+|---|---|
+| Clarification round | Passed |
+| Review against `sheet-dump.json` | **8 blocking issues**, all resolved; one new spreadsheet defect found (D7). See *Revision* in [plan.md](../plan.md). |
+
+The second round is the reason for the checks added below. Every item in the
+original list passed while the spec still asserted goldens taken from rounded
+display strings, a schema that rejected two real rows, and a tab recorded as
+empty that held the household's salary. A checklist of *properties* did not
+catch any of it; the checks below are checks against the *source*.
+
+## Source fidelity *(added after review)*
+
+- [x] Every expected value traces to a dump `value` field, not a `display` string (FR-046)
+- [x] Every value the source stores is imported, including values no formula reads (FR-044, D7)
+- [x] Every enum in the spec covers every value the source's data validation permits
+- [x] Every tab was read in full, not only the columns its title suggests
+- [x] Every monetary field carries its currency rather than assuming one (FR-047)
+- [x] Row counts in the spec are counted from the dump, not carried forward from a draft
+- [x] Claims of the form "N computations" are backed by a generated artifact, not prose
+- [x] Registered divergences state whether they change a number *today*
+- [x] Constitution Check claims are supported by a resolved decision, not an open caveat
 
 ## Content Quality
 
