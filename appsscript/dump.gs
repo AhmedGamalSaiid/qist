@@ -7,18 +7,30 @@
  *   the model to a real database we have to get it out and version-control
  *   it. This file does that and nothing else.
  *
- * HOW TO RUN
- *   1. Extensions -> Apps Script
- *   2. Select function "dumpModel", press Run
- *   3. Approve the Drive permission prompt (first run only — it needs to
- *      create one file in your Drive; that is the only new scope)
- *   4. The execution log prints a URL. Download that JSON, drop it in the
+ * HOW TO RUN — use a STANDALONE script, not the bound one
+ *   1. script.google.com -> New project (a fresh, standalone project)
+ *   2. Paste this whole file in, save
+ *   3. Select function "dumpModel", press Run
+ *   4. Approve the Sheets + Drive permission prompt (first run only)
+ *   5. The execution log prints a URL. Download that JSON, drop it in the
  *      repo at  migration/sheet-dump.json
+ *
+ * WHY STANDALONE: this script needs Drive access to write the dump file.
+ * Adding that scope to the sheet-bound project would widen the scopes of the
+ * deployed web app too, forcing a re-authorization of a production app for
+ * the sake of a one-time migration tool. A throwaway standalone project keeps
+ * the running app untouched. Delete the project when you are done.
+ *
+ * It still works if pasted into the bound project (it falls back to
+ * getActive()), but prefer standalone.
  *
  * SAFE: reads only. It never writes to the spreadsheet, never changes a
  * format, never touches a formula. The single side effect is one new JSON
  * file in your Drive.
  */
+
+// The sheet this app was built around. Only used when running standalone.
+var DUMP_SHEET_ID = '1Qly9tW7HHAIuHFbxxqgdwrfaYw1-H2QWlKo_RkEDTzc';
 
 var DUMP_INPUT_YELLOW = '#fff2cc';  // the sheet's "you may type here" colour
 var DUMP_MAX_ROWS = 5000;           // cap per sheet; Transactions is the long one
@@ -43,7 +55,7 @@ function dumpModel() {
 
 /** Compact overview printed to the log — a fast sanity check before dumpModel. */
 function dumpSummary() {
-  var ss = SpreadsheetApp.getActive();
+  var ss = openTarget_();
   var sheets = ss.getSheets();
   Logger.log('Spreadsheet: %s  (%s tabs, tz=%s)', ss.getName(), sheets.length, ss.getSpreadsheetTimeZone());
   for (var i = 0; i < sheets.length; i++) {
@@ -65,7 +77,7 @@ function dumpSummary() {
 // ============================ EXTRACTION ============================
 
 function buildModel_() {
-  var ss = SpreadsheetApp.getActive();
+  var ss = openTarget_();
   var out = {
     extractedAt: new Date().toISOString(),
     spreadsheet: {
@@ -232,6 +244,19 @@ function dumpConditionalFormats_(sh) {
 }
 
 // ============================ HELPERS ============================
+
+/**
+ * The target spreadsheet. Standalone projects have no active spreadsheet, so
+ * open by id; bound projects use whatever they are bound to, which lets the
+ * same file work either way.
+ */
+function openTarget_() {
+  var active = null;
+  try { active = SpreadsheetApp.getActive(); } catch (e) { active = null; }
+  if (active) return active;
+  if (!DUMP_SHEET_ID) throw new Error('Set DUMP_SHEET_ID to the spreadsheet id.');
+  return SpreadsheetApp.openById(DUMP_SHEET_ID);
+}
 
 function jsType_(v) {
   if (v instanceof Date) return 'date';
