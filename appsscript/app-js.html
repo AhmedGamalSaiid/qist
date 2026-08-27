@@ -27,7 +27,8 @@
   // ---------------------------------------------------------------------
   var WRITE_RPCS = {
     addTransaction: 1, setInstallmentPaid: 1, setRate: 1, setAccountAmount: 1,
-    addAccount: 1, setLiabilityAmount: 1, setPropertyPaid: 1, takeSnapshot: 1
+    addAccount: 1, setLiabilityAmount: 1, setPropertyPaid: 1, takeSnapshot: 1,
+    addCcPayment: 1, setCcPaymentStatus: 1, updateCcPayment: 1, deleteCcPayment: 1, setSalary: 1
   };
 
   function parseErrorCode_(message) {
@@ -280,6 +281,7 @@
     var MORE_ITEMS = [
       ['accounts', 'moreAccounts'], ['rates', 'moreRates'], ['networth', 'moreNetWorth'],
       ['total', 'moreTotal'], ['history', 'moreHistory'], ['transactions', 'moreTransactions'],
+      ['cards', 'moreCards'], ['forecast', 'moreForecast'],
       ['settings', 'moreSettings']
     ];
     moreList.innerHTML = '';
@@ -302,15 +304,18 @@
     var target = document.getElementById('asOfIndicator');
     if (!store.state || !store.state.meta) { target.textContent = ''; return; }
     var d = new Date(store.state.meta.fetchedAt);
-    var text = t('dataAsOf') + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (store.stale) text += ' ⚠';
-    target.textContent = text;
+    // The clock reading is a Latin-digit LTR run; isolate it or RTL reorders
+    // the neutral space and renders "PM 06:26".
+    target.textContent = t('dataAsOf') + ' ';
+    target.appendChild(bdi(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
+    if (store.stale) target.appendChild(document.createTextNode(' ⚠'));
   }
 
   // =======================================================================
   // Screen: Home (T014-T017)
   // =======================================================================
   function renderHome() {
+    renderHomePlanCard();
     var d = store.state.dashboard;
     var grid = document.getElementById('homeKpiGrid');
     grid.innerHTML = '';
@@ -469,7 +474,7 @@
       var li = el('li', 'list-row');
       var main = el('div', 'list-row-main');
       var title = el('div', 'list-row-title');
-      title.appendChild(bdi(txRow.category));
+      title.appendChild(bdi(categoryLabel(txRow.category)));
       main.appendChild(title);
       var sub = el('div', 'list-row-sub', fmtDate(txRow.date) + ' · ');
       sub.appendChild(bdi(txRow.account));
@@ -968,7 +973,7 @@
       var li = el('li', 'list-row');
       var main = el('div', 'list-row-main');
       var title = el('div', 'list-row-title');
-      title.appendChild(bdi(r.category));
+      title.appendChild(bdi(categoryLabel(r.category)));
       main.appendChild(title);
       var sub = el('div', 'list-row-sub', fmtDate(r.date) + ' · ');
       sub.appendChild(bdi(r.account));
@@ -988,6 +993,577 @@
     renderTransactionsList();
   }
   SCREEN_RENDERERS.transactions = renderTransactionsScreen;
+
+  // =======================================================================
+  // Credit Card Payments & Monthly Cash-Flow Planning (spec 002)
+  // =======================================================================
+
+  /**
+   * Renders a "run setupCreditCardPlanning() once" notice into `containerId`
+   * and returns true when the feature isn't set up yet, so callers can skip
+   * their normal render (T009).
+   */
+  function ccSetupGuard_(containerId) {
+    var el_ = document.getElementById(containerId);
+    var blocked = !store.state.creditCards || store.state.creditCards.setup === false;
+    el_.classList.toggle('hidden', !blocked);
+    if (blocked) el_.textContent = t('setupNeeded');
+    return blocked;
+  }
+
+  // -----------------------------------------------------------------------
+  // Screen: Cards (US1 — T014-T018)
+  // -----------------------------------------------------------------------
+  var ccFormInited = false;
+
+  function ccStatusLabelKey_(status) {
+    return status === 'Paid' ? 'statusPaid' : (status === 'Overdue' ? 'statusOverdue' : 'statusPending');
+  }
+
+  function initCcPaymentForm() {
+    if (ccFormInited) return;
+    ccFormInited = true;
+    document.getElementById('ccDueDateInput').value = todayIsoLocal_();
+    document.getElementById('addCcPaymentForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      submitCcPayment();
+    });
+  }
+
+  function renderCcCardChips() {
+    var container = document.getElementById('ccCardChips');
+    var prevSelected = container.querySelector('.chip.selected');
+    var prevValue = prevSelected ? prevSelected.getAttribute('data-value') : null;
+    container.innerHTML = '';
+    (store.state.creditCards.cards || []).forEach(function (name) {
+      var chip = el('button', 'chip');
+      chip.type = 'button';
+      chip.appendChild(bdi(name));
+      chip.setAttribute('data-value', name);
+      if (name === prevValue) chip.classList.add('selected');
+      chip.addEventListener('click', function () {
+        container.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('selected'); });
+        chip.classList.add('selected');
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function findCcDuplicate_(card, amount, dueDate) {
+    var dup = (store.state.creditCards.payments || []).some(function (p) {
+      return p.card === card && p.amountEgp === amount && p.dueDate === dueDate;
+    });
+    if (dup) return 'duplicateWarning';
+    var instDup = (store.state.installments.rows || []).some(function (r) {
+      return r.amountEgp === amount && r.dueDate === dueDate;
+    });
+    return instDup ? 'installmentMatchWarning' : null;
+  }
+
+  function submitCcPayment() {
+    var chip = document.getElementById('ccCardChips').querySelector('.chip.selected');
+    var card = chip ? chip.getAttribute('data-value') : null;
+    var amountRaw = document.getElementById('ccAmountInput').value;
+    var amount = parseFloat(amountRaw);
+    var dueDate = document.getElementById('ccDueDateInput').value;
+    var statementMonth = document.getElementById('ccStatementMonthInput').value.trim();
+    var note = document.getElementById('ccNoteInput').value;
+
+    if (!card) { toast(t('requiredField'), 'error'); return; }
+    if (!dueDate) { toast(t('requiredField'), 'error'); return; }
+    if (!amountRaw || isNaN(amount) || amount <= 0) { toast(t('mustBePositive'), 'error'); return; }
+
+    var defaultedMonth = parseStatementMonth_(statementMonth, dueDate);
+    var warningKey = findCcDuplicate_(card, amount, dueDate);
+
+    function proceed() {
+      var payload = { card: card, amount: amount, dueDate: dueDate, statementMonth: defaultedMonth, note: note };
+      var prevPayments = store.state.creditCards.payments.slice();
+      var optimisticPayment = { row: null, card: card, dueDate: dueDate, amountEgp: amount, statementMonth: defaultedMonth, paid: false, note: note };
+
+      optimisticWrite({
+        apply: function () { store.state.creditCards.payments = prevPayments.concat([optimisticPayment]); },
+        revert: function () { store.state.creditCards.payments = prevPayments; },
+        rpcName: 'addCcPayment',
+        args: [payload],
+        successToastKey: 'paymentSaved'
+      }).then(function (slice) {
+        if (slice) {
+          document.getElementById('addCcPaymentForm').reset();
+          document.getElementById('ccDueDateInput').value = todayIsoLocal_();
+          document.getElementById('ccCardChips').querySelectorAll('.chip').forEach(function (c) { c.classList.remove('selected'); });
+        }
+      });
+    }
+
+    if (warningKey) {
+      confirmDialog(t(warningKey)).then(function (ok) { if (ok) proceed(); });
+    } else {
+      proceed();
+    }
+  }
+
+  /** Inline edit panel (amount/due date/note), toggled by the Edit button — T017. */
+  function ccEditPanel_(payment, panel) {
+    panel.innerHTML = '';
+    panel.classList.add('form');
+
+    var amountField = el('label', 'field');
+    amountField.appendChild(el('span', '', t('amount')));
+    var amountInput = document.createElement('input');
+    amountInput.type = 'text'; amountInput.inputMode = 'decimal'; amountInput.className = 'editable';
+    amountInput.value = payment.amountEgp;
+    amountField.appendChild(amountInput);
+
+    var dateField = el('label', 'field');
+    dateField.appendChild(el('span', '', t('dueDate')));
+    var dateInput = document.createElement('input');
+    dateInput.type = 'date'; dateInput.className = 'editable';
+    dateInput.value = payment.dueDate;
+    dateField.appendChild(dateInput);
+
+    var noteField = el('label', 'field');
+    noteField.appendChild(el('span', '', t('noteOptional')));
+    var noteInput = document.createElement('input');
+    noteInput.type = 'text'; noteInput.className = 'editable'; noteInput.maxLength = 500;
+    noteInput.value = payment.note || '';
+    noteField.appendChild(noteInput);
+
+    var saveBtn = el('button', 'btn-primary', t('save'));
+    saveBtn.type = 'button';
+    saveBtn.addEventListener('click', function () {
+      var amount = parseFloat(amountInput.value);
+      var dueDate = dateInput.value;
+      if (!dueDate) { toast(t('requiredField'), 'error'); return; }
+      if (isNaN(amount) || amount <= 0) { toast(t('mustBePositive'), 'error'); return; }
+      var note = noteInput.value;
+
+      var payload = { card: payment.card, amount: amount, dueDate: dueDate, statementMonth: payment.statementMonth, note: note, paid: payment.paid };
+      var prev = { amountEgp: payment.amountEgp, dueDate: payment.dueDate, note: payment.note };
+      optimisticWrite({
+        apply: function () { payment.amountEgp = amount; payment.dueDate = dueDate; payment.note = note; },
+        revert: function () { payment.amountEgp = prev.amountEgp; payment.dueDate = prev.dueDate; payment.note = prev.note; },
+        rpcName: 'updateCcPayment',
+        args: [payment.row, payload],
+        successToastKey: 'paymentSaved'
+      }).then(function (slice) {
+        if (slice) panel.classList.add('hidden');
+      });
+    });
+
+    panel.appendChild(amountField);
+    panel.appendChild(dateField);
+    panel.appendChild(noteField);
+    panel.appendChild(saveBtn);
+  }
+
+  function ccPaymentRow_(payment) {
+    var wrap = el('div', '');
+    var todayIso = todayIsoLocal_();
+    var status = ccStatus_(payment, todayIso);
+    var row = el('div', 'installment-row ' + (status === 'Paid' ? 'paid' : (status === 'Overdue' ? 'overdue' : 'dueSoon')));
+    var main = el('div', 'list-row-main');
+    var sub = el('div', 'list-row-sub', fmtDate(payment.dueDate));
+    if (payment.note) { sub.appendChild(document.createTextNode(' · ')); sub.appendChild(bdi(payment.note)); }
+    main.appendChild(sub);
+    row.appendChild(main);
+    row.appendChild(el('div', 'list-row-amount', fmt(payment.amountEgp)));
+    var badge = el('span', 'countdown-badge', t(ccStatusLabelKey_(status)));
+    row.appendChild(badge);
+
+    row.addEventListener('click', function () {
+      var next = !payment.paid;
+      var prev = payment.paid;
+      optimisticWrite({
+        apply: function () { payment.paid = next; },
+        revert: function () { payment.paid = prev; },
+        rpcName: 'setCcPaymentStatus',
+        args: [payment.row, next],
+        successToastKey: 'paymentSaved'
+      });
+    });
+
+    var editPanel = el('div', 'hidden');
+
+    var editBtn = el('button', 'btn-secondary', t('editPayment'));
+    editBtn.type = 'button';
+    editBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (editPanel.classList.contains('hidden')) ccEditPanel_(payment, editPanel);
+      editPanel.classList.toggle('hidden');
+    });
+    row.appendChild(editBtn);
+
+    var delBtn = el('button', 'btn-secondary', t('deletePayment'));
+    delBtn.type = 'button';
+    delBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      confirmDialog(t('deletePaymentConfirm')).then(function (ok) {
+        if (!ok) return;
+        var prevPayments = store.state.creditCards.payments.slice();
+        optimisticWrite({
+          apply: function () { store.state.creditCards.payments = prevPayments.filter(function (p) { return p.row !== payment.row; }); },
+          revert: function () { store.state.creditCards.payments = prevPayments; },
+          rpcName: 'deleteCcPayment',
+          args: [payment.row],
+          successToastKey: 'paymentSaved'
+        });
+      });
+    });
+    row.appendChild(delBtn);
+
+    wrap.appendChild(row);
+    wrap.appendChild(editPanel);
+    return wrap;
+  }
+
+  function renderCards() {
+    if (ccSetupGuard_('cardsSetupNeeded')) {
+      document.getElementById('addCcPaymentForm').classList.add('hidden');
+      document.getElementById('cardGroups').innerHTML = '';
+      return;
+    }
+    document.getElementById('addCcPaymentForm').classList.remove('hidden');
+    initCcPaymentForm();
+    renderCcCardChips();
+
+    var container = document.getElementById('cardGroups');
+    container.innerHTML = '';
+    var cards = store.state.creditCards.cards || [];
+    var payments = store.state.creditCards.payments || [];
+
+    cards.forEach(function (cardName) {
+      var cardPayments = payments.filter(function (p) { return p.card === cardName; });
+      var section = el('div', 'card');
+      var heading = el('h2', '');
+      heading.appendChild(bdi(cardName));
+      section.appendChild(heading);
+
+      if (!cardPayments.length) {
+        section.appendChild(el('p', 'empty-state', t('nothingDue')));
+        container.appendChild(section);
+        return;
+      }
+
+      var byMonth = {};
+      cardPayments.forEach(function (p) {
+        var mk = monthKey_(p.dueDate);
+        (byMonth[mk] = byMonth[mk] || []).push(p);
+      });
+      var months = Object.keys(byMonth).sort();
+      var stillToPay = 0;
+      var todayIso = todayIsoLocal_();
+
+      months.forEach(function (mk) {
+        section.appendChild(el('div', 'status-group-title', mk));
+        byMonth[mk].sort(function (a, b) { return a.dueDate.localeCompare(b.dueDate); }).forEach(function (p) {
+          section.appendChild(ccPaymentRow_(p));
+          if (ccStatus_(p, todayIso) !== 'Paid') stillToPay += p.amountEgp;
+        });
+      });
+
+      var totalRow = el('div', 'list-row');
+      totalRow.appendChild(el('div', 'list-row-main', t('stillToPay')));
+      totalRow.appendChild(el('div', 'list-row-amount', fmt(stillToPay)));
+      section.appendChild(totalRow);
+
+      container.appendChild(section);
+    });
+  }
+  SCREEN_RENDERERS.cards = renderCards;
+
+  // -----------------------------------------------------------------------
+  // Screen: Plan (US2-US4 — T020-T033)
+  // -----------------------------------------------------------------------
+  var planState = { monthKey: null };
+
+  function currentMonthKey_() { return monthKey_(todayIsoLocal_()); }
+
+  function openingBalanceForMonth_(monthKey) {
+    var current = currentMonthKey_();
+    if (monthKey === current) return store.state.total.totalOfAll;
+    // Walk forward from the current month, chaining closing balances.
+    var opening = store.state.total.totalOfAll;
+    var cursor = current;
+    while (cursor !== monthKey) {
+      var plan = computeMonthlyPlan(store.state, cursor, opening, cursor !== current);
+      opening = plan.closingBalance;
+      cursor = addMonths_(cursor, 1);
+    }
+    return opening;
+  }
+
+  var PLAN_HORIZON_MONTHS = 12;
+
+  function renderPlanMonthNav(monthKey) {
+    var nav = document.getElementById('planMonthNav');
+    nav.innerHTML = '';
+    var row = el('div', 'field-row');
+    var current = currentMonthKey_();
+    var horizonEnd = addMonths_(current, PLAN_HORIZON_MONTHS - 1);
+
+    var prevBtn = el('button', 'btn-secondary', '‹ ' + t('prevMonth'));
+    prevBtn.type = 'button';
+    prevBtn.disabled = monthKey <= current;
+    prevBtn.addEventListener('click', function () { planState.monthKey = addMonths_(monthKey, -1); renderPlan(); });
+
+    var label = el('div', 'list-row-title', monthKey);
+    label.style.flex = '1 1 auto';
+    label.style.textAlign = 'center';
+
+    var nextBtn = el('button', 'btn-secondary', t('nextMonth') + ' ›');
+    nextBtn.type = 'button';
+    nextBtn.disabled = monthKey >= horizonEnd;
+    nextBtn.addEventListener('click', function () { planState.monthKey = addMonths_(monthKey, 1); renderPlan(); });
+
+    row.appendChild(prevBtn); row.appendChild(label); row.appendChild(nextBtn);
+    nav.appendChild(row);
+  }
+
+  function renderPlanVerdict(plan) {
+    var card = document.getElementById('planVerdict');
+    card.innerHTML = '';
+
+    var chipsRow = el('div', 'field-row');
+    var ccChip = el('div', 'kpi-card');
+    ccChip.appendChild(el('div', 'kpi-label', t('creditCardsSubtotal')));
+    ccChip.appendChild(el('div', 'kpi-value', fmt(plan.ccTotal)));
+    var instChip = el('div', 'kpi-card');
+    instChip.appendChild(el('div', 'kpi-label', t('installmentsSubtotal')));
+    instChip.appendChild(el('div', 'kpi-value', fmt(plan.installmentTotal)));
+    var totalChip = el('div', 'kpi-card');
+    totalChip.appendChild(el('div', 'kpi-label', t('monthTotal')));
+    totalChip.appendChild(el('div', 'kpi-value', fmt(plan.totalObligations)));
+    card.appendChild(ccChip); card.appendChild(instChip); card.appendChild(totalChip);
+
+    var incomeLine = el('p', '');
+    if (plan.incomeUnavailable) {
+      incomeLine.appendChild(document.createTextNode(t('incomeUnavailable') + ' '));
+      var link = document.createElement('a');
+      link.href = '#';
+      link.textContent = t('setRatePrompt');
+      link.addEventListener('click', function (e) { e.preventDefault(); showScreen('rates'); });
+      incomeLine.appendChild(link);
+    } else if (store.state.income.salary) {
+      var salary = store.state.income.salary;
+      var native = salary.currency === 'USD' ? fmtUsd(salary.amount) : fmt(salary.amount) + ' EGP';
+      incomeLine.textContent = t('expectedIncome') + ': ' + native + ' (' + fmt(plan.totalIncome) + ' EGP)';
+    }
+    card.appendChild(incomeLine);
+
+    var openingLine = el('p', 'hint');
+    openingLine.appendChild(document.createTextNode(t('openingBalanceLabel') + ': ' + fmt(plan.openingBalance) + ' EGP · ' + t('asOf') + ' '));
+    // toLocaleString() with no locale argument follows the browser's system
+    // locale, which can render Arabic-Indic digits — force en-US so the
+    // timestamp stays Latin digits like every other figure (FR-039/A-011).
+    var openingAsOfDate = new Date(plan.openingAsOf);
+    openingLine.appendChild(bdi(openingAsOfDate.toLocaleDateString('en-US') + ' ' + openingAsOfDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })));
+    card.appendChild(openingLine);
+
+    var remainingLine = el('p', plan.monthlyShortage > 0 ? 'danger' : '');
+    if (plan.monthlyShortage > 0) {
+      remainingLine.textContent = t('shortage') + ': ' + fmt(plan.monthlyShortage) + ' EGP ' + t('mustBeCovered');
+    } else {
+      remainingLine.textContent = t('surplus') + ': ' + fmt(plan.monthlyRemaining) + ' EGP';
+    }
+    card.appendChild(remainingLine);
+
+    if (plan.firstShortfallDate) {
+      var warn = el('div', 'installment-row overdue');
+      warn.appendChild(el('div', 'list-row-main', t('firstShortfall') + ': ' + fmtDate(plan.firstShortfallDate)));
+      warn.appendChild(el('div', 'list-row-amount', t('amountToPrepare') + ': ' + fmt(plan.amountToPrepare)));
+      card.appendChild(warn);
+    } else {
+      card.appendChild(el('p', '', t('allCovered')));
+    }
+
+    renderSalaryEditor_(card);
+  }
+
+  /** Income card — salary settings with an edit form (amount/currency/day), T028. */
+  function renderSalaryEditor_(card) {
+    var salary = store.state.income.salary || { amount: 2250, currency: 'USD', day: 27 };
+    var editBtn = el('button', 'btn-secondary', t('editSalary'));
+    editBtn.type = 'button';
+    var formWrap = el('div', 'form hidden');
+
+    var amountField = el('label', 'field');
+    amountField.appendChild(el('span', '', t('amount')));
+    var amountInput = document.createElement('input');
+    amountInput.type = 'text'; amountInput.inputMode = 'decimal'; amountInput.className = 'editable';
+    amountInput.value = salary.amount;
+    amountField.appendChild(amountInput);
+
+    var currencyToggle = el('div', 'segmented small');
+    ['USD', 'EGP'].forEach(function (cur) {
+      var b = el('button', 'segmented-btn' + (salary.currency === cur ? ' selected' : ''), cur);
+      b.type = 'button'; b.setAttribute('data-value', cur);
+      currencyToggle.appendChild(b);
+    });
+    wireSegmented(currencyToggle);
+
+    var dayField = el('label', 'field');
+    dayField.appendChild(el('span', '', t('salaryDay')));
+    var dayInput = document.createElement('input');
+    dayInput.type = 'text'; dayInput.inputMode = 'numeric'; dayInput.className = 'editable';
+    dayInput.value = salary.day;
+    dayField.appendChild(dayInput);
+
+    var saveBtn = el('button', 'btn-primary', t('save'));
+    saveBtn.type = 'button';
+
+    formWrap.appendChild(amountField);
+    formWrap.appendChild(currencyToggle);
+    formWrap.appendChild(dayField);
+    formWrap.appendChild(saveBtn);
+
+    editBtn.addEventListener('click', function () { formWrap.classList.toggle('hidden'); });
+
+    saveBtn.addEventListener('click', function () {
+      var amount = parseFloat(amountInput.value);
+      var currency = selectedSegmentValue(currencyToggle) || 'USD';
+      var day = parseInt(dayInput.value, 10);
+      if (isNaN(amount) || amount <= 0) { toast(t('mustBePositive'), 'error'); return; }
+      if (isNaN(day) || day < 1 || day > 31) { toast(t('mustBePositive'), 'error'); return; }
+
+      var payload = { amount: amount, currency: currency, day: day };
+      var prev = store.state.income.salary;
+      optimisticWrite({
+        apply: function () { store.state.income.salary = payload; },
+        revert: function () { store.state.income.salary = prev; },
+        rpcName: 'setSalary',
+        args: [payload],
+        successToastKey: 'paymentSaved'
+      }).then(function (slice) {
+        if (slice) formWrap.classList.add('hidden');
+      });
+    });
+
+    card.appendChild(editBtn);
+    card.appendChild(formWrap);
+  }
+
+  function renderPlanTimeline(plan) {
+    var container = document.getElementById('planTimeline');
+    container.innerHTML = '';
+    if (!plan.timeline.length) {
+      container.appendChild(el('p', 'empty-state', t('noObligations')));
+      return;
+    }
+    var byDate = {};
+    plan.timeline.forEach(function (e) { (byDate[e.date] = byDate[e.date] || []).push(e); });
+    Object.keys(byDate).sort().forEach(function (date) {
+      container.appendChild(el('div', 'status-group-title', fmtDate(date)));
+      byDate[date].forEach(function (e) {
+        var row = el('div', 'list-row');
+        var main = el('div', 'list-row-main');
+        var label = e.sourceType === 'income' ? t('salary') : (e.sourceType === 'installment' ? t('sourceInstallment') + ' · ' : '');
+        var title = el('div', 'list-row-title', label);
+        if (e.sourceType !== 'income') title.appendChild(bdi(e.sourceName));
+        main.appendChild(title);
+        row.appendChild(main);
+        row.appendChild(el('div', 'list-row-amount', fmt(e.amountEgp)));
+        container.appendChild(row);
+      });
+    });
+  }
+
+  function renderPlan() {
+    if (ccSetupGuard_('planSetupNeeded')) {
+      document.getElementById('planMonthNav').innerHTML = '';
+      document.getElementById('planVerdict').innerHTML = '';
+      document.getElementById('planTimeline').innerHTML = '';
+      document.getElementById('planAddCcBtn').classList.add('hidden');
+      return;
+    }
+    document.getElementById('planAddCcBtn').classList.remove('hidden');
+    if (!planState.monthKey) planState.monthKey = currentMonthKey_();
+    var monthKey = planState.monthKey;
+    var opening = openingBalanceForMonth_(monthKey);
+    var plan = computeMonthlyPlan(store.state, monthKey, opening, monthKey !== currentMonthKey_());
+
+    renderPlanMonthNav(monthKey);
+    renderPlanVerdict(plan);
+    renderPlanTimeline(plan);
+
+    var addBtn = document.getElementById('planAddCcBtn');
+    if (!addBtn.dataset.inited) {
+      addBtn.dataset.inited = '1';
+      addBtn.addEventListener('click', function () { showScreen('cards'); });
+    }
+  }
+  SCREEN_RENDERERS.plan = renderPlan;
+
+  // -----------------------------------------------------------------------
+  // Screen: Forecast (US5 — T034-T036)
+  // -----------------------------------------------------------------------
+  function renderForecast() {
+    if (ccSetupGuard_('forecastSetupNeeded')) {
+      document.getElementById('forecastTable').innerHTML = '';
+      document.getElementById('forecastBeyondHorizon').textContent = '';
+      return;
+    }
+    var forecast = computeForecast(store.state, 12);
+    var table = document.getElementById('forecastTable');
+    var rows = ['<tr><th>' + escapeHtml_(t('monthColumn')) + '</th><th>' + escapeHtml_(t('typeIncome')) +
+      '</th><th>' + escapeHtml_(t('creditCardsSubtotal')) + '</th><th>' + escapeHtml_(t('installmentsSubtotal')) +
+      '</th><th>' + escapeHtml_(t('monthTotal')) + '</th><th>' + escapeHtml_(t('remaining')) + '</th></tr>'];
+    forecast.months.forEach(function (m) {
+      var remainingLabel = m.monthlyShortage > 0 ? ('-' + fmt(m.monthlyShortage)) : fmt(m.monthlyRemaining);
+      var rowClass = m.monthlyShortage > 0 ? ' class="shortage-row"' : '';
+      var projLabel = m.isProjection ? ' <span class="hint">(' + escapeHtml_(t('projectionLabel')) + ')</span>' : '';
+      rows.push('<tr' + rowClass + ' data-month="' + m.month + '"><td>' + escapeHtml_(m.month) + projLabel + '</td><td>' +
+        fmt(m.totalIncome) + '</td><td>' + fmt(m.ccTotal) + '</td><td>' + fmt(m.installmentTotal) + '</td><td>' +
+        fmt(m.totalObligations) + '</td><td>' + remainingLabel + '</td></tr>');
+    });
+    table.innerHTML = rows.join('');
+    table.querySelectorAll('tr[data-month]').forEach(function (tr) {
+      tr.addEventListener('click', function () {
+        planState.monthKey = tr.getAttribute('data-month');
+        showScreen('plan');
+      });
+    });
+    var beyond = document.getElementById('forecastBeyondHorizon');
+    beyond.textContent = forecast.beyondHorizonTotal > 0 ? t('beyondHorizon') + ': ' + fmt(forecast.beyondHorizonTotal) : '';
+  }
+  SCREEN_RENDERERS.forecast = renderForecast;
+
+  // -----------------------------------------------------------------------
+  // Home plan card (US6 — T037-T039)
+  // -----------------------------------------------------------------------
+  function renderHomePlanCard() {
+    var card = document.getElementById('homePlanCard');
+    if (!store.state.creditCards || store.state.creditCards.setup === false) {
+      card.classList.add('hidden');
+      return;
+    }
+    card.classList.remove('hidden');
+    card.innerHTML = '';
+    var summary = computeHomeSummary(store.state);
+
+    card.appendChild(el('h2', '', t('monthlyPlan')));
+    card.appendChild(el('p', '', t('dueThisMonth') + ': ' + fmt(summary.stillToPay)));
+
+    if (summary.nearestUnpaid) {
+      var line = el('p', '');
+      line.appendChild(document.createTextNode(t('nextPayment') + ': '));
+      line.appendChild(bdi(summary.nearestUnpaid.sourceName));
+      line.appendChild(document.createTextNode(' — ' + fmt(summary.nearestUnpaid.amountEgp) + ' — ' + fmtDate(summary.nearestUnpaid.date)));
+      card.appendChild(line);
+    } else {
+      card.appendChild(el('p', '', t('noUpcomingPayments')));
+    }
+
+    if (summary.shortageIndicator) {
+      card.appendChild(el('p', 'danger', t('prepareShort') + ': ' + fmt(summary.shortageIndicator.amountToPrepare)));
+    }
+
+    if (!card.dataset.inited) {
+      card.dataset.inited = '1';
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', function () { showScreen('plan'); });
+    }
+  }
 
   // =======================================================================
   // Screen: Settings & More (T037)

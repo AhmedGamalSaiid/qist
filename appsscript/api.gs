@@ -122,6 +122,38 @@ var WRITE_ALLOWLIST = Object.freeze({
     allows: function (p) {
       return p.c1 === 'A' && p.c2 === 'G' && p.row === firstEmptySnapshotRow_();
     }
+  }),
+  addCcPayment: Object.freeze({
+    sheet: 'CC Payments',
+    // Row bound mirrors addTransaction: the exact first blank row is
+    // resolved under lock by the RPC, which fills column A.
+    allows: function (p) {
+      return p.c1 === 'A' && p.c2 === 'F' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  setCcPaymentStatus: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'E' && p.c2 === 'E' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  updateCcPayment: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'A' && p.c2 === 'F' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  deleteCcPayment: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'A' && p.c2 === 'F' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  setSalary: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'I' && p.c2 === 'I' && p.row >= 2 && p.row <= 4;
+    }
   })
 });
 
@@ -245,6 +277,8 @@ function getState() {
     netWorth: readNetWorth_(ss),
     transactions: readTransactions_(ss),
     history: readHistory_(ss),
+    creditCards: readCreditCards_(ss),
+    income: readIncome_(ss),
     meta: {
       fetchedAt: new Date().toISOString(),
       sheetUrl: ss.getUrl()
