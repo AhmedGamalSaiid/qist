@@ -182,7 +182,7 @@ Three rows, hand-entered, the only yellow cells on that tab.
 |---|---|---|
 | `id` | TEXT PK | |
 | `household_id` | TEXT NOT NULL FK | |
-| `name` | TEXT NOT NULL | may be Arabic — `فرش` at 60,000 is a real row (FR-004) |
+| `name` | TEXT NOT NULL | may be Arabic — `فرش` at `amount_minor = 6000000` (60,000.00 EGP, `Total!J9`) is a real row (FR-004) |
 | `amount_minor` | INTEGER NOT NULL | EGP piastres |
 | `sort_order` | INTEGER NOT NULL | |
 | `created_at` | INTEGER NOT NULL | |

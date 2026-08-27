@@ -56,7 +56,7 @@ fixed:
 - [ ] T004 [P] Create `.nvmrc` at repository root containing `22` — the repo default is still 20 and Wrangler 4 refuses to run on it (quickstart.md prerequisites)
 - [ ] T005 [P] Create `drizzle.config.ts` at repository root pointing at `db/schema/` with the SQLite dialect and `db/migrations/` as output
 - [ ] T006 [P] Create `vitest.config.ts` at repository root defining **two projects over the same test bodies**: `local` (better-sqlite3) and `d1` (Wrangler local D1). R9a requires both; a single-project config cannot catch a D1-only failure
-- [ ] T007 Add npm scripts to `package.json`: `db:generate`, `db:migrate:local`, `import`, `reconcile`, `goldens:generate`, `coverage:check`, `test:golden`, `test:unit`, `test:isolation`, `test:atomicity`, `lint:money` — matching the commands quickstart.md V1–V9 tell the owner to run
+- [ ] T007 Add npm scripts to `package.json`: `db:generate`, `db:migrate:local`, `import`, `reconcile`, `goldens:generate`, `coverage:generate`, `coverage:check`, `test:golden`, `test:unit`, `test:isolation`, `test:atomicity`, `lint:money` — matching the commands quickstart.md V1–V9 tell the owner to run
 
 **Checkpoint**: `npm install` succeeds on Node 22 and `npx tsc --noEmit` passes on an empty project.
 
@@ -72,7 +72,7 @@ schema. Every user story depends on all of it.
 ### Dump access and the coverage matrix (plan.md Phase 2, step 0)
 
 - [ ] T008 Implement the typed dump reader in `lib/import/dump.ts`: parse `migration/sheet-dump.json`, expose sheets by index and cells by A1 reference. It MUST expose the `value` field and MUST NOT expose `display` on the money path at all — an API that cannot return `display` is what prevents FR-046 being violated by accident
-- [ ] T009 [P] Implement the timezone preflight in `lib/import/preflight.ts` (FR-048): read the dump's recorded timezone and extraction timestamp, and throw unless both the source timezone and `Africa/Cairo` place the extraction on the same calendar date. The committed dump still records `America/Los_Angeles`, so this is a live check, not a formality
+- [ ] T009 [P] Implement the timezone preflight in `lib/import/preflight.ts` (FR-048): read the dump's recorded timezone and extraction timestamp, and throw unless both the source timezone and the **household's configured timezone** (T022, not a hardcoded string) place the extraction on the same calendar date. The committed dump still records `America/Los_Angeles`, so this is a live check, not a formality
 - [ ] T010 [P] Implement the dump completeness check in `lib/import/validate.ts` (FR-002): refuse a truncated or incomplete dump and state exactly what was missing
 - [ ] T011 Implement the formula normaliser in `scripts/coverage.ts`: read every formula-bearing cell from the dump, replace row/column indices with placeholders so repeated per-row formulas collapse to one shape, and group by shape
 - [ ] T012 Extend `scripts/coverage.ts` to emit `specs/003-data-foundation/contracts/coverage.md` with columns `range`, `count`, `shape`, `owner`, `reason`, `verdict`, per the *Coverage matrix* section of [contracts/reconciliation.md](contracts/reconciliation.md)
@@ -89,12 +89,13 @@ schema. Every user story depends on all of it.
 
 - [ ] T015 [P] Define `MinorUnits`, `AssetClass` and the per-class scale table in `lib/money/types.ts` (R1): EGP 2, USD 2, GOLD 3 (milligrams), SILVER 3, and the USD rate scale 4
 - [ ] T016 [P] Implement half-up rounding to a target class's minor unit in `lib/money/round.ts` (R2), applied at each conversion and never deferred. Rounding must be away from zero on negatives — `Net Worth!B19` is negative
-- [ ] T017 Implement `convert(quantityMinor, fromClass, rate)` in `lib/money/convert.ts` per [contracts/derivations.md](contracts/derivations.md), with `EGP → EGP` as identity (depends on T015, T016)
-- [ ] T018 [P] Implement the `lint:money` static check in `scripts/lint-money.ts`: reject `number` division, `parseFloat`, and float literals in `lib/money/`, `lib/rates/` and `lib/derive/`. It MUST exempt `monthlyRollup().savingsRate` **by name** — widening the rule to allow ratios generally would let a monetary float through (quickstart V7)
+- [ ] T017 Implement `convert(quantityMinor, fromClass, rate)` in `lib/money/convert.ts` per [contracts/derivations.md](contracts/derivations.md), with `EGP → EGP` as identity (depends on T015, T016). Rate multiplication goes through `decimal.js`, never native float math (Principle II) — the plan's Constitution Check asserts this and nothing else enforces it
+- [ ] T018 [P] Implement the `lint:money` static check in `scripts/lint-money.ts`: reject `number` division, `parseFloat`, and float literals in `lib/money/`, `lib/rates/` and `lib/derive/`. It MUST exempt `monthlyRollup().savingsRate` **by name** — widening the rule to allow ratios generally would let a monetary float through (quickstart V7). It MUST also assert that any rate multiplication under `lib/money/` and `lib/rates/` routes through `decimal.js`, so Principle II's decimal-library mandate is checked rather than assumed
 
 ### Rate lookup
 
 - [ ] T019 Implement rate lookup by date in `lib/rates/lookup.ts` (R3): return the rate in force on a given date, and throw `MissingRateError` when the date precedes every recorded rate. Never substitute zero, and never reach forward to a later rate (FR-019, FR-043)
+- [ ] T019a Implement `todayFor(household)` in `lib/derive/dates.ts` (FR-034, FR-035): resolve the current calendar date in the household's own timezone, and export it as the **only** sanctioned way to obtain "today". Every derivation receives the result as a parameter; none reads a clock or an ambient `TZ`. Extend the `lint:money` check in T018 to also reject `new Date()` with no argument and `Date.now()` anywhere under `lib/derive/`
 
 ### The write primitive
 
@@ -103,12 +104,12 @@ schema. Every user story depends on all of it.
 
 ### Schema
 
-- [ ] T022 [P] Define `households`, `users`, `memberships`, `invitations` in `db/schema/tenancy.ts` per [data-model.md](data-model.md)
+- [ ] T022 [P] Define `households`, `users`, `memberships`, `invitations` in `db/schema/tenancy.ts` per [data-model.md](data-model.md). `households.timezone TEXT NOT NULL` defaulting to `'Africa/Cairo'` is the **single canonical zone** for every date-dependent calculation (FR-034, R8) — it is configuration, not a constant compiled into the derivations
 - [ ] T023 [P] Define `accounts`, `property_holdings`, `liabilities` in `db/schema/holdings.ts`. `accounts` carries **`kind` (`asset` | `liability`)** alongside `asset_class` — the `Data` tab's dropdown permits `Liability` and two rows use it (D7). `property_holdings` and `liabilities` each carry `created_at`
 - [ ] T024 [P] Define `transactions`, `installments`, `cards`, `card_payments`, `income_settings` in `db/schema/ledger.ts`. `income_settings` carries **`salary_currency`** — the stored salary is 2250 **USD**, and an EGP-only column would import it as 22.50 EGP (FR-047)
 - [ ] T025 [P] Define `rates` in `db/schema/rates.ts` with `UNIQUE(household_id, asset_class, as_of)`, append-only, and an explicit `scale` column
 - [ ] T026 [P] Define `snapshots` in `db/schema/history.ts` with `net_worth_excl_installments_minor` NOT NULL and `net_worth_incl_installments_minor` nullable. **Neither is named plain `net_worth_minor`** — D4 forbids an unqualified net-worth figure, and a column name is a presentation
-- [ ] T027 [P] Define `audit_log` in `db/schema/audit.ts` recording actor, action, before and after (Principle II, FR-016)
+- [ ] T027 [P] Define `audit_log` in `db/schema/audit.ts` per [data-model.md](data-model.md) recording `actor_id`, `actor_kind`, `action`, `entity`, `entity_id`, `before_json`, `after_json` and **`at`** (Principle II, FR-013 — the timestamp is required and was missing from this task's earlier wording). `actor_kind = 'system'` covers the automated rate fetch (FR-039). Append-only: no update or delete path exists
 - [ ] T028 Add `UNIQUE(household_id, id)` to every domain table and make **every cross-table foreign key composite `(household_id, id)`** across `db/schema/tenancy.ts`, `db/schema/holdings.ts`, `db/schema/ledger.ts`, `db/schema/rates.ts`, `db/schema/history.ts` and `db/schema/audit.ts`. Scoped reads alone cannot stop a transaction in household A referencing an account in household B (Principle IX). Depends on T022–T027
 - [ ] T029 Add the single-row CHECK constraints in the schema files that own each table: `currency = 'USD' ⟹ rate_id IS NOT NULL` and `reverses_id != id` in `db/schema/ledger.ts`; `balance_mode` consistency in `db/schema/holdings.ts`; `source = 'app' ⟹ net_worth_incl_installments_minor IS NOT NULL` in `db/schema/history.ts`. Add the partial `UNIQUE(household_id, reverses_id) WHERE reverses_id IS NOT NULL` in `db/schema/ledger.ts`. **Cycle prevention is not here** — a SQLite CHECK cannot follow a foreign key to another row (see T076)
 - [ ] T030 Generate the initial migration with `npm run db:generate` into `db/migrations/`, then apply it with `npm run db:migrate:local`. Generated migrations are never hand-edited — regenerate instead
@@ -119,7 +120,7 @@ schema. Every user story depends on all of it.
 
 ### Golden value generation
 
-- [ ] T032 Implement `scripts/goldens.ts`: read every expected value named by [contracts/derivations.md](contracts/derivations.md) from the dump's `value` fields, convert to minor units with half-up rounding, and emit `tests/golden/expected.generated.ts`. Goldens are generated, never hand-copied — the first draft of the contract was built from `display` and was wrong by 20–40 piastres on every non-zero installment figure
+- [ ] T032 Implement `scripts/goldens.ts`: read every expected value named by [contracts/derivations.md](contracts/derivations.md) from the dump's `value` fields, convert to minor units with half-up rounding, and emit `tests/golden/expected.generated.ts`. Goldens are generated, never hand-copied — the first draft of the contract was built from `display` and was wrong by 20–40 piastres on every non-zero installment figure. Then run `npm run goldens:generate` and commit `tests/golden/expected.generated.ts` — T033–T041 import it, so the generator existing is not the same as it having been run
 
 **Checkpoint**: Coverage matrix committed and `coverage:check` green; schema migrated; `atomically` passes a trivial round-trip on both drivers; `scripts/goldens.ts` emits values matching the tables in `derivations.md`.
 
@@ -149,13 +150,14 @@ changes nothing.
 - [ ] T036 [P] [US1] Golden test for `netWorth` in `tests/golden/networth.test.ts` — all six fields, including the negative `includingInstallments` at `-782483081`
 - [ ] T037 [P] [US1] Golden test for `installmentSummary` in `tests/golden/installments.test.ts` — all nine fields. **Assert no field ends in `00`** except `totalScheduled` and `overdue`: ten of the 56 installments carry fractional EGP, so a round number elsewhere is the signature of the `display` bug
 - [ ] T038 [P] [US1] Golden test for `unpaidByYear` in `tests/golden/unpaid-by-year.test.ts` — the 21-year spine, plus the cross-check that buckets sum to exactly `821460520`, equal to `installmentSummary.totalRemaining`. Neither gets a tolerance (FR-029)
-- [ ] T039 [P] [US1] Golden test for `assetMix` in `tests/golden/asset-mix.test.ts` — five classes, with `USD` under a ±2 piastre tolerance and the rest exact
+- [ ] T039 [P] [US1] Golden test for `assetMix` in `tests/golden/asset-mix.test.ts` — five classes, with `USD` under a tolerance obtained from the **same `toleranceFor(conversions)` helper T061 uses** — `F3` accumulates two conversions so it resolves to ±2 piastres, but the literal must not be pinned here or it will drift from the rule — and the rest exact
 - [ ] T040 [P] [US1] Golden test for `transactionEgp` in `tests/golden/transaction-egp.test.ts` — `502554` for the single 100 USD transaction, computed at the pinned rate rather than a live one
 - [ ] T041 [P] [US1] Golden test for `monthlyRollup` in `tests/golden/monthly-rollup.test.ts` — income `502554` (not `502600`), `savingsRate` `1.0` at Aug 2026 compared with an explicit epsilon, and `null` (never `0`) for every zero-income month
 - [ ] T042 [P] [US1] Golden test for `EDATE` month-end clamping in `tests/unit/edate.test.ts` — 31 Jan + 1 month → 28/29 Feb. The 3/6/12-month windows disagree at month ends if this is wrong
-- [ ] T043 [P] [US1] Arabic round-trip test in `tests/golden/arabic.test.ts` (FR-004, quickstart V4): the liability named `فرش` at 60,000 must come back byte-exact through extraction, import and reporting
+- [ ] T043 [P] [US1] Arabic round-trip test in `tests/golden/arabic.test.ts` (FR-004, quickstart V4): the liability named `فرش` (`Total!I9`, `Total!J9 = 60000` EGP → `amount_minor = 6000000`) must come back byte-exact through extraction, import and reporting
 - [ ] T044 [P] [US1] Missing-rate test in `tests/unit/missing-rate.test.ts` (quickstart V6): converting on a date earlier than any recorded rate throws `MissingRateError` and never substitutes zero
 - [ ] T045 [P] [US1] Timezone preflight test in `tests/unit/preflight.test.ts`: a dump whose timezone and timestamp straddle a date boundary is refused with a reason; the committed dump passes
+- [ ] T045a [P] [US1] Device-timezone independence test in `tests/unit/timezone-independence.test.ts` (SC-009, FR-035): run every date-dependent derivation — `installmentSummary`, `unpaidByYear`, the 3/6/12-month windows — under `TZ=Africa/Cairo`, `TZ=America/Los_Angeles`, `TZ=UTC` and `TZ=Pacific/Kiritimati`, at four times of day spanning the ten-hour disagreement window, and assert byte-identical output in all sixteen combinations. `today` is passed in (T019a), so a difference means something read a clock (R8)
 - [ ] T046 [US1] Import idempotency test in `tests/golden/import-idempotent.test.ts` (quickstart V2, SC-006): import twice, assert identical row counts **and identical ids**, and assert the expected counts — 17 accounts (15 asset, 2 liability), 3 property holdings, 7 liabilities, 56 installments, 1 transaction, 1 snapshot, 3 rates, 4 cards, 1 income settings row, 0 card payments
 - [ ] T047 [US1] Import completeness regression tests in `tests/golden/import-completeness.test.ts`: assert 17 accounts not 15 (the two `Liability` rows survive), 4 cards exist, and `income_settings.salary_currency = 'USD'`. Each of these was silently dropped by an earlier draft of the data model
 
@@ -180,12 +182,13 @@ changes nothing.
 
 ### Implementation for User Story 1 — reconciliation
 
-- [ ] T061 [P] [US1] Implement the report line model and verdict rules in `lib/reconcile/verdict.ts`: `PASS`, `PASS (tolerance)`, `DIVERGED`, `FAIL`. Tolerance is ±`conversions` piastres, where `conversions` counts **conversions that actually occurred**, not conversion terms present in the formula — a figure whose conversion inputs are all zero has `conversions 0` and must reconcile exactly
-- [ ] T062 [P] [US1] Implement report rendering in `lib/reconcile/render.ts`: figures printed in **minor units** taken from the dump's `value`, never re-rounded, with an optional EGP rendering in parentheses. A report printing `109715.20` cannot show a one-piastre disagreement, which is the only kind it exists to catch
-- [ ] T063 [P] [US1] Implement the *Behavioural divergences* section in `lib/reconcile/divergences.ts`: registered divergences with no current numeric difference are listed here and excluded from the verdict tally. **None of the four registered divergences prints a `DIVERGED` line on today's data** — a `DIVERGED` line reading `difference 0` is a defect in the report
+- [ ] T061 [P] [US1] Implement the report line model and all **five** verdict rules in `lib/reconcile/verdict.ts` per the table in [contracts/reconciliation.md](contracts/reconciliation.md): `PASS`, `PASS (tolerance)`, `DIVERGED`, **`CARRIED`** and `FAIL`. `CARRIED` marks a value imported verbatim with nothing to compute against — FR-007 requires a hand-typed cell to be distinguishable from a verified calculation, and without it a typed value prints as a `PASS` the report never actually proved. Expose the tolerance as a `toleranceFor(conversions)` helper so goldens and the report share one rule (T039). Tolerance is ±`conversions` piastres, where `conversions` counts **conversions that actually occurred**, not conversion terms present in the formula — a figure whose conversion inputs are all zero has `conversions 0` and must reconcile exactly
+- [ ] T062 [P] [US1] Implement report rendering in `lib/reconcile/render.ts` emitting the **full nine-field line** from the *Report shape* section of [contracts/reconciliation.md](contracts/reconciliation.md): `sheet_ref`, `label`, `sheet_value`, `computed_value`, `difference`, `conversions`, `tolerance`, `verdict`, `note`. `difference` is mandatory on every line and carries the **observed** size, not a boolean within-bounds (FR-031) — a systematic drift must stay visible even when each line is individually in bounds (SC-008). `tolerance` is printed explicitly on every line it applies to (FR-030). Figures printed in **minor units** taken from the dump's `value`, never re-rounded, with an optional EGP rendering in parentheses. A report printing `109715.20` cannot show a one-piastre disagreement, which is the only kind it exists to catch
+- [ ] T063 [P] [US1] Implement the *Behavioural divergences* section in `lib/reconcile/divergences.ts` (FR-049): registered divergences with no current numeric difference are listed here and excluded from the verdict tally. **None of the four registered divergences prints a `DIVERGED` line on today's data** — a `DIVERGED` line reading `difference 0` is a defect in the report
 - [ ] T064 [P] [US1] Implement the *Unreachable values* section in `lib/reconcile/unreachable.ts` (D7, FR-044/FR-045): list every value the source stores that no formula reads — `Data!D13` at 600 EGP and `Data!D14` at 0. Zeros are listed too, so an empty section is unambiguous. An unreachable value absent from this section is a `FAIL`
+- [ ] T064a [US1] Implement the *Open discrepancies* section and its resolution record in `lib/reconcile/discrepancies.ts` (FR-010, US1 acceptance scenario 4): every `FAIL` line gets an entry carrying the sheet value, the computed value, and a `resolution` field recording **which side was correct and why** — `sheet-correct`, `computed-correct` (the sheet was quietly wrong) or `unresolved`. Resolutions are read from a committed `specs/003-data-foundation/discrepancies.md`, never inferred. The expected value is **never** editable to match the computed one: a resolution of `computed-correct` reclassifies the line as a divergence and requires a written reason, and an `unresolved` entry keeps the line a `FAIL` and the completion gate shut (FR-009)
 - [ ] T065 [US1] Implement coverage enforcement in `lib/reconcile/coverage.ts`: every formula-bearing cell in the matrix must appear on the report or be explicitly excluded with a reason. A coverage gap is a `FAIL` of the report itself
-- [ ] T066 [US1] Implement the report generator in `lib/reconcile/report.ts` composing T061–T065, grouped by source tab in sheet order, with a summary counting each verdict and stating the completion gate outcome
+- [ ] T066 [US1] Implement the report generator in `lib/reconcile/report.ts` composing T061–T065 and T064a, grouped by source tab in sheet order, with a summary counting each of the five verdicts separately (a `CARRIED` count folded into `PASS` defeats FR-007) and stating the completion gate outcome
 - [ ] T067 [US1] Implement the CLI entry point in `scripts/reconcile.ts`, exiting non-zero on any `FAIL` so the completion gate is machine-enforced (FR-009)
 - [ ] T068 [US1] Implement snapshot handling in `lib/reconcile/snapshots.ts`: historical snapshots are listed as carried-over historical fact and **excluded from pass/fail** rather than recomputed and compared (US1 acceptance scenario 7)
 
@@ -312,6 +315,7 @@ supplying the other household's identifier directly as input.
 T008 (dump reader) → T011 → T012 → T013 (matrix, DECISION POINT) → T014
 T015 ‖ T016 → T017 (convert)
 T022…T027 (schema, parallel) → T028 (composite FKs) → T029 (CHECKs) → T030 (migration)
+T022 (households.timezone) → T019a (todayFor) → T045a (timezone independence)
 T020 (atomically) — blocks every write path in every story
 T032 (goldens) depends on T008 + T016
 ```
@@ -360,7 +364,7 @@ Task: "Define audit_log in db/schema/audit.ts"
 ### Phase 3 (US1) — the widest fan-out in the feature
 
 ```bash
-# All 13 golden/unit tests together — separate files, no interdependencies
+# All 14 golden/unit tests together — separate files, no interdependencies
 Task: "Golden test for convert in tests/golden/convert.test.ts"
 Task: "Golden test for holdingsByClass in tests/golden/holdings.test.ts"
 Task: "Golden test for totals in tests/golden/totals.test.ts"
@@ -374,6 +378,7 @@ Task: "EDATE clamping test in tests/unit/edate.test.ts"
 Task: "Arabic round-trip test in tests/golden/arabic.test.ts"
 Task: "Missing-rate test in tests/unit/missing-rate.test.ts"
 Task: "Timezone preflight test in tests/unit/preflight.test.ts"
+Task: "Device-timezone independence test in tests/unit/timezone-independence.test.ts"
 
 # Then the derivations — five files, seven tasks
 Task: "Implement totals in lib/derive/totals.ts"

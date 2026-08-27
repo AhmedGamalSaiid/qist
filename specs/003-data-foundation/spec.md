@@ -2,12 +2,14 @@
 
 **Feature Directory**: `specs/003-data-foundation`
 
-**Feature Branch**: not yet cut — no `before_specify` git hook is configured in
-this project, so no branch was created automatically. See Assumptions.
+**Feature Branch**: `003-data-foundation`, cut by hand from
+`fix/code-review-findings` — no `before_specify` git hook is configured in this
+project, so no branch was created automatically.
 
 **Created**: 2026-08-27
 
-**Status**: Ready for planning once the extraction dump exists. All 3 clarifications resolved 2026-08-27.
+**Status**: Ready for implementation. All 3 clarifications resolved 2026-08-27;
+plan, contracts and tasks generated.
 
 **Input**: Migrate the data foundation off Google Sheets onto a dedicated
 application data store. Data layer only; no user interface ships in this
@@ -350,10 +352,12 @@ by supplying the other household's identifier directly as input.
   recorded.
 - **FR-043**: If no rate exists on or before a transaction's date, conversion
   MUST fail visibly rather than substituting the nearest available rate.
-- **FR-044**: The difference between a frozen historical conversion and the
+- **FR-049**: The difference between a frozen historical conversion and the
   spreadsheet's live-rate conversion MUST be reported as a known, accepted
   divergence rather than a reconciliation failure — the spreadsheet's behaviour
-  is the defect being corrected.
+  is the defect being corrected. Where the two produce the same number today,
+  it is reported as a behavioural divergence and MUST NOT print a `DIVERGED`
+  line (see contracts/reconciliation.md).
 
 **Time**
 
@@ -370,12 +374,18 @@ by supplying the other household's identifier directly as input.
 
 **Rate history**
 
+*The general form of the rate rules. FR-038 and FR-041 state how a rate is
+stored; FR-042 and FR-043 state how a transaction in particular is converted.*
+
 - **FR-017**: System MUST retain every recorded rate with the date from which
-  it applies, rather than only the latest.
+  it applies, rather than only the latest. *(General form of FR-038.)*
 - **FR-018**: System MUST compute a value as of a given date using the rate in
-  force on that date.
-- **FR-019**: System MUST report a missing rate explicitly rather than
-  substituting a default or zero.
+  force on that date. *(General form of FR-042.)*
+- **FR-019**: A missing rate MUST raise a typed, distinguishable failure that
+  names the asset class and the date requested. The caller MUST surface it
+  rather than substituting a default, a zero, or the nearest available rate.
+  "Report explicitly" means the failure reaches the reader — it does not permit
+  returning a placeholder figure. *(General form of FR-043.)*
 
 **Isolation**
 
@@ -393,14 +403,25 @@ by supplying the other household's identifier directly as input.
   exactly one. Holds shared settings such as the reporting currency.
 - **Person** — someone who can sign in. Belongs to one or more households,
   with a role in each. Identified as the actor on every recorded change.
+- **Membership** — a person's place in one household, carrying their role
+  (`owner`, `admin`, `member`, `viewer`). At least one owner per household.
+- **Invitation** — an outstanding offer of membership to an email address, with
+  a role and an expiry. Never grants `owner`.
 - **Account** — a holding of value: cash in a currency, or a quantity of a
   metal. Carries its asset class, whether it counts as an investment, its
   quantity, and **how that quantity is established** — stated directly by the
   owner, or derived from recorded entries against an opening balance. Accounts
   in both modes coexist.
-- **Entry** — a dated financial movement: income, expense, or transfer. Carries
-  amount, category, description, and optionally a reference to the entry it
-  corrects.
+- **Property holding** — a property position valued separately from accounts,
+  carrying the amount paid to date.
+- **Income settings** — the household's recorded salary, **the currency it is
+  denominated in**, and the pay day. The source records a salary of 2,250 in
+  **USD**; an EGP-only reading of it is a 200× error (FR-047).
+- **Transaction** — a dated financial movement: income, expense, or transfer.
+  Carries amount, its currency, category, description, and optionally a
+  reference to the transaction it corrects. Called an "entry" in the user
+  stories above; the two words name the same thing, and `transaction` is the
+  term the schema and tests use.
 - **Installment** — a dated future obligation with an amount, a plan it belongs
   to, and whether it has been settled.
 - **Liability** — an amount owed, distinguished from an account holding value.
@@ -444,11 +465,11 @@ by supplying the other household's identifier directly as input.
 - The spreadsheet remains available for the duration of this feature.
   Reconciliation is only possible while it is there to compare against, and any
   edit to it invalidates a dump taken beforehand.
-- One deliberate exception to the above: the spreadsheet's timezone is corrected
-  to match the application's before extraction. This changes only
-  `TODAY()`-dependent cells, which recompute correctly; stored dates are
-  unaffected. Correcting it first means the recovered model is the intended one
-  rather than one carrying a latent defect.
+- The spreadsheet's timezone was **not** corrected before extraction — the
+  committed dump still records `America/Los_Angeles`. The dump happens to be
+  safe (taken 13:06 Cairo / 03:06 LA, both 2026-08-27), but that is a property
+  of when it was taken, not of the process. FR-048's preflight is what makes
+  the safety checked rather than assumed, and any re-extraction must pass it.
 - The extraction covers every tab that contributes to a computed figure. If a
   contributing tab is discovered later, the dump must be retaken.
 - Historical spreadsheet data is accepted as-is. This feature does not attempt
@@ -464,10 +485,9 @@ by supplying the other household's identifier directly as input.
 - Authentication is assumed to exist by the time isolation is exercised in
   production, but building it is out of scope here. This feature must design
   for it without depending on it.
-- No branch was cut for this feature because no git hook is configured. Work
-  currently sits on `fix/code-review-findings`, which is an unrelated branch and
-  a poor home for it; a dedicated branch should be created before implementation
-  begins.
+- No git hook cuts branches in this project, so `003-data-foundation` was
+  created by hand from `fix/code-review-findings` once the post-review
+  corrections landed. Implementation work belongs on it.
 
 ## Resolved Decisions
 
@@ -531,7 +551,7 @@ A USD transaction is converted once, at the rate in force when it happened, and
 never restated. The spreadsheet restates every past transaction whenever the
 market moves. With exactly one transaction in the system, correcting this now
 costs nothing and will never be cheaper. The resulting difference from the
-spreadsheet is an accepted divergence, not a failure. FR-042 through FR-044.
+spreadsheet is an accepted divergence, not a failure. FR-042, FR-043 and FR-049.
 
 ### D7 — Liability-account balances → **imported, and reported as unreachable**
 
