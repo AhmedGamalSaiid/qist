@@ -290,10 +290,27 @@ fabricated `statement_day` would be a derived value masquerading as a fact.
 **Relationship to the two `Liability` accounts.** `Data!A13:A14` (`ADIB C.C`,
 `HSBC C.C`) name the same two physical cards as `CC Payments!H7:H8`
 (`ADIB CC`, `HSBC CC`), spelled differently, and `Total!I4:I5` (`CC ADIB`,
-`CC HSBC`) name them a third way. The importer does **not** attempt to unify
-them: it imports all three lists as written, because merging on a fuzzy name
-match would be a guess, and a wrong guess silently moves money. Reconciling
-the three spellings is a decision for the owner, recorded as D7.
+`CC HSBC`) name them a third way.
+
+**The importer imports all three lists as written**, because merging on a fuzzy
+name match would be a guess, and a wrong guess silently moves money. The
+identity is a fact about the owner's data, not something a string comparison
+can establish.
+
+**The owner has since established it (2026-08-27, resolving D7):** the three
+ADIB names are one card, the `0.00 EGP` at `Total!J4` was entered incorrectly,
+and the real balance is the **600.00 EGP** at `Data!D13`. The `0.00` is not a
+separate liability and must not be carried as one — the final model holds one
+ADIB entity at 600.00 EGP with no double-counting across `cards`, the
+`liability`-kind `accounts` row, and the `liabilities` row. HSBC has the same
+three-way naming, but both its sources record 0, so unifying it changes no
+figure.
+
+That unification is **feature 004's work, not this feature's.** Applying it
+here would change figures this feature exists to reconcile against the
+spreadsheet, and the spreadsheet — not the port — is what is wrong. It lands as
+a recorded correction with an audit entry (FR-013, FR-015). See
+[discrepancies.md](discrepancies.md).
 
 ### `card_payments` — from `CC Payments!A2:F10` (0 rows)
 | Column | Type | Notes |

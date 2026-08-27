@@ -5,6 +5,7 @@ import { enforceCoverage, excludedRanges, type CoverageEnforcement } from './cov
 import {
   buildOpenDiscrepancies,
   loadDiscrepancies,
+  loadSourceCorrections,
   type OpenDiscrepancy,
 } from './discrepancies'
 import { partitionDivergences, REGISTERED_DIVERGENCES } from './divergences'
@@ -29,6 +30,8 @@ export interface Report {
   readonly behavioural: typeof REGISTERED_DIVERGENCES
   readonly unreachable: UnreachableValue[]
   readonly droppedUnreachable: UnreachableInput[]
+  /** Register entries naming a cell the report does not list. */
+  readonly orphanedResolutions: ReturnType<typeof buildUnreachableSection>['orphanedResolutions']
   readonly snapshots: SnapshotLine[]
   readonly discrepancies: OpenDiscrepancy[]
   readonly coverage: CoverageEnforcement
@@ -51,8 +54,14 @@ export function generateReport(
 
   const { behavioural } = partitionDivergences()
   const unreachableInputs = unreachableFrom(dump, state)
-  const { values: unreachable, dropped: droppedUnreachable } =
-    buildUnreachableSection(unreachableInputs)
+  const {
+    values: unreachable,
+    dropped: droppedUnreachable,
+    orphanedResolutions,
+  } = buildUnreachableSection(
+    unreachableInputs,
+    loadSourceCorrections(options.discrepanciesPath),
+  )
   const snapshots = buildSnapshotSection(state.snapshots)
   const discrepancies = buildOpenDiscrepancies(lines, loadDiscrepancies(options.discrepanciesPath))
   const coverage = enforceCoverage(dump, lines)
@@ -61,7 +70,13 @@ export function generateReport(
   // value the source stores that the importer dropped. A clean-looking report
   // that quietly lost a number is the failure mode this exists to prevent.
   const gateOpen =
-    discrepancies.every((d) => !d.blocking) && coverage.clean && droppedUnreachable.length === 0
+    discrepancies.every((d) => !d.blocking) &&
+    coverage.clean &&
+    droppedUnreachable.length === 0 &&
+    // A register entry pointing at a cell the report does not list means the
+    // register has drifted from the data, and a stale resolution record is
+    // worse than none: it reads as though a question was settled.
+    orphanedResolutions.length === 0
 
   const rateAges = new Map(options.rateAges ?? [])
   if (!rateAges.has('*')) {
@@ -76,6 +91,7 @@ export function generateReport(
     behavioural,
     unreachable,
     droppedUnreachable,
+    orphanedResolutions,
     snapshots,
     discrepancies,
     coverage,
@@ -173,6 +189,10 @@ function renderReport(
   out.push('figure, so they have no verdict — but discarding them silently would lose data')
   out.push('the owner entered. Zeros are listed too, so an empty section is unambiguous.')
   out.push('')
+  out.push('A `resolution` line means the owner has since said this value is the correct')
+  out.push('one and some other cell that contradicts it is wrong. It is read from')
+  out.push('specs/003-data-foundation/discrepancies.md, never inferred.')
+  out.push('')
   if (report.unreachable.length === 0) {
     out.push('  (none)')
   }
@@ -182,6 +202,11 @@ function renderReport(
     out.push(`  stored_value     ${value.storedMinor} (${majorUnits(value.storedMinor)} EGP)`)
     out.push(`  read_by          ${value.readBy}`)
     out.push(`  disposition      ${value.disposition}`)
+    if (value.resolution !== undefined) {
+      const wrapped = wrap(value.resolution, 60)
+      out.push(`  resolution       ${wrapped[0] ?? ''}`)
+      for (const line of wrapped.slice(1)) out.push(`                   ${line}`)
+    }
     out.push('')
   }
 
@@ -272,6 +297,12 @@ function renderReport(
   }
   for (const stray of report.coverage.strayLines) {
     out.push(`  STRAY  ${stray} — the report names a cell the dump does not have`)
+  }
+  for (const orphan of report.orphanedResolutions) {
+    out.push(
+      `  STALE REGISTER  ${orphan.sourceRef} — resolved in discrepancies.md, ` +
+        `but no unreachable value with that reference exists`,
+    )
   }
 
   // --- Summary. -----------------------------------------------------------

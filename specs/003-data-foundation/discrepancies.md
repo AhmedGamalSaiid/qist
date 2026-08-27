@@ -30,6 +30,15 @@ holds two contradictory records and the owner has since said which is right.
 The reconciliation report is unaffected: it proves parity with the sheet, and
 parity still holds — the sheet is simply wrong about its own data here.
 
+The table below is **read by the reconciler** and printed against the matching
+line in the *Unreachable values* section, so a reader of the report sees the
+resolution rather than an open question. Columns are
+`source_ref | resolution | authoritative_minor | reason`.
+
+| source_ref | resolution | authoritative_minor | reason |
+|---|---|---|---|
+| `Data!D13` | source-corrected | 60000 | One physical ADIB card is named three ways — `ADIB C.C` (`Data!A13`), `ADIB CC` (`CC Payments!H7`) and `CC ADIB` (`Total!I4`). The owner confirms these are one card, that the `0.00 EGP` at `Total!J4` was entered incorrectly, and that the real balance is the `600.00 EGP` here. The `0.00` is not a separate liability and must not be carried as one. Feature 004 holds one ADIB entity at 600.00 EGP with no double-counting. |
+
 ### D7 — the ADIB card balance (resolved 2026-08-27)
 
 One physical card, named three ways, carrying two balances:
@@ -40,7 +49,11 @@ One physical card, named three ways, carrying two balances:
 | `CC Payments!H7` | `ADIB CC` | card record, no balance | n/a |
 | `Total!I4` / `J4` | `CC ADIB` | 0.00 EGP | yes — feeds `Total!K2`, and net worth |
 
-**Owner's decision: 600.00 EGP is correct.** `Total!J4` is stale.
+**Owner's decision: 600.00 EGP is correct.** The `0.00 EGP` at `Total!J4` was
+**entered incorrectly**. It is *not* a separate liability, *not* a second
+balance, and must not be carried as either. The final data model holds **one
+ADIB card/entity at 600.00 EGP**, with no double-counting between `cards`, the
+`liability`-kind `accounts` row and the `liabilities` row.
 
 Consequence: the sheet understates short-term liabilities by 600 EGP, and both
 net-worth figures are overstated by the same amount. That is a defect in the

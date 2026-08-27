@@ -113,3 +113,58 @@ export function buildOpenDiscrepancies(
 function isResolution(value: string): value is Resolution {
   return value === 'sheet-correct' || value === 'computed-correct' || value === 'unresolved'
 }
+
+/**
+ * Resolved source-data defects (D7).
+ *
+ * Distinct from an open discrepancy: the *spreadsheet* holds two contradictory
+ * records and the owner has said which is right. There is no `FAIL` line to
+ * clear — the port matches the sheet, and the sheet is what is wrong.
+ *
+ * These are read from the same committed register and printed against the
+ * matching *Unreachable values* line, so a reader of the report sees the
+ * resolution instead of an open question. Reading them from the register
+ * rather than hard-coding them keeps the owner's own account names out of the
+ * codebase: this is a migration tool for one workbook, but the schema it
+ * writes serves every household.
+ */
+export interface SourceCorrection {
+  readonly sourceRef: string
+  readonly authoritativeMinor: number | null
+  readonly reason: string
+}
+
+export function parseSourceCorrections(markdown: string): SourceCorrection[] {
+  const out: SourceCorrection[] = []
+
+  for (const rawLine of markdown.split('\n')) {
+    const line = rawLine.trim()
+    if (!line.startsWith('|')) continue
+
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim().replace(/^`|`$/g, ''))
+    if (cells.length < 4) continue
+
+    const [sourceRef, resolution, authoritative, reason] = cells as [string, string, string, string]
+    if (resolution !== 'source-corrected') continue
+
+    const parsed = Number(authoritative)
+    out.push({
+      sourceRef,
+      authoritativeMinor: Number.isFinite(parsed) ? parsed : null,
+      reason,
+    })
+  }
+
+  return out
+}
+
+export function loadSourceCorrections(path = DISCREPANCIES_PATH): SourceCorrection[] {
+  try {
+    return parseSourceCorrections(readFileSync(path, 'utf8'))
+  } catch {
+    return []
+  }
+}

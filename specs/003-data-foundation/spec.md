@@ -581,6 +581,35 @@ exactly. What changes is that the balance stops being silently lost. Whether
 liabilities list is a question about the owner's data, not about the port, and
 this feature must not answer it by guessing. FR-044, FR-045.
 
+
+#### D7 — resolution (owner decision, 2026-08-27)
+
+The open question this defect left — *which of the three spellings carries the
+real balance* — has been answered by the owner:
+
+- `ADIB C.C` (`Data!A13`), `ADIB CC` (`CC Payments!H7`) and `CC ADIB`
+  (`Total!I4`) are **one physical card**.
+- The `0.00 EGP` at `Total!J4` was **entered incorrectly**.
+- The correct ADIB balance is the **600.00 EGP** at `Data!D13`.
+- The `0.00` is **not** a separate liability or a second balance, and must not
+  be carried as one.
+- The final data model holds **one ADIB entity at 600.00 EGP**, with no
+  double-counting between the card, the liability-kind account and the
+  short-term liability row.
+
+The same three-way naming applies to HSBC (`HSBC C.C` / `HSBC CC` /
+`CC HSBC`); both its sources record 0, so unifying HSBC changes no figure.
+
+**This does not change any figure this feature reconciles.** The report proves
+parity with the spreadsheet, and the spreadsheet is internally wrong here — it
+understates short-term liabilities by 600 EGP and overstates both net-worth
+figures by the same. Editing a reconciled number to reflect the owner's
+correction would break the one thing the report exists to prove (FR-010,
+Principle X). The correction is applied in feature 004, as a recorded
+correction with an audit entry rather than an in-place edit (FR-013, FR-015).
+
+Recorded in [discrepancies.md](discrepancies.md).
+
 ### Q3 — Historical snapshots → **imported verbatim**
 
 Snapshots are imported exactly as recorded, never recomputed, and are listed
@@ -601,7 +630,7 @@ decision rather than an omission.
 | Deferred | Why | Where it lands |
 |---|---|---|
 | The **scheduled** rate fetch (FR-039) | Needs a deployed Worker and a Cron trigger; this feature ships no deployment. The write path, the `fetch` source and its attribution are delivered and tested here — only the trigger is deferred. | The first feature that deploys a Worker |
-| Reconciling the three spellings of the two credit cards — `Data!A13:A14`, `CC Payments!H7:H8`, `Total!I4:I5` | Merging them requires knowing which represents the real balance. That is a question about the owner's data, and guessing moves money. | An owner decision, surfaced by the D7 report line |
+| ~~Reconciling the three spellings of the two credit cards~~ | **RESOLVED 2026-08-27** — the owner has confirmed the three ADIB names are one card and its real balance is the 600.00 EGP in `Data!D13`; the 0.00 in `Total!J4` was entered incorrectly. See *D7 — resolution* below. | Applied in feature 004 |
 | `cards.limit_minor`, `statement_day`, `due_day` | The source records no value. Inventing one would store a fabricated fact. | Whenever the owner supplies them |
 | The including-installments figure for the single imported snapshot | Never recorded historically and not recoverable from the dump. | Not recoverable; app-created snapshots record both from cutover on |
 
