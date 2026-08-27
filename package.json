@@ -1,0 +1,41 @@
+{
+  "name": "incoming-sheet-data-foundation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Recovered financial model from the household spreadsheet, restated as tested TypeScript over Cloudflare D1.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "tsx scripts/migrate-local.ts",
+    "import": "tsx scripts/import.ts",
+    "reconcile": "tsx scripts/reconcile.ts",
+    "goldens:generate": "tsx scripts/goldens.ts",
+    "coverage:generate": "tsx scripts/coverage.ts",
+    "coverage:check": "tsx scripts/coverage-check.ts",
+    "lint:money": "tsx scripts/lint-money.ts",
+    "test": "vitest run",
+    "test:golden": "node scripts/vitest-runner.mjs tests/golden",
+    "test:unit": "node scripts/vitest-runner.mjs tests/unit",
+    "test:isolation": "node scripts/vitest-runner.mjs tests/isolation",
+    "test:atomicity": "node scripts/vitest-runner.mjs tests/atomicity",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "decimal.js": "^10.4.3",
+    "drizzle-orm": "^0.36.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.9.0",
+    "better-sqlite3": "^11.5.0",
+    "drizzle-kit": "^0.28.1",
+    "miniflare": "^4.20250612.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.0",
+    "wrangler": "^4.0.0"
+  }
+}

@@ -15,11 +15,32 @@ Recover the financial model that exists only as spreadsheet formulas, restate it
 as tested TypeScript, and prove the restatement produces the same numbers. The
 storage move to Cloudflare D1 is a consequence, not the goal.
 
-707 formulas across 10 tabs reduce to **roughly 25 distinct computations** —
-`derivations.md` currently specifies 11 functions, several owning more than one
-sheet range. The exact number is established by the generated coverage matrix
-(`contracts/coverage.md`, the first reconciliation task), not asserted here.
-The data is
+707 formulas across 10 tabs reduce to **72 distinct formula shapes, owned by
+12 computations** — measured, not estimated. The coverage matrix
+([contracts/coverage.md](contracts/coverage.md)) is generated from the dump by
+`npm run coverage:generate`, and `npm run coverage:check` fails if it drifts or
+if `sum(count)` stops equalling the dump's own formula total. The breakdown:
+
+| Measure | Value |
+|---|---|
+| Formula cells in the dump | 707 |
+| Distinct formula shapes (R1C1, relative to the holding cell) | 72 |
+| Shapes excluded with a written reason | 8 |
+| Shapes owned by a computation | 64 |
+| Owning computations | 12 |
+
+The 12 are the 11 functions `derivations.md` specifies — `holdingsByClass`,
+`shortTermLiabilities`, `totalOfAll`, `investmentTotal`, `netWorth`,
+`installmentSummary`, `unpaidByYear`, `assetMix`, `transactionEgp`,
+`monthlyRollup` — plus `liquidTotal`, which owns `Dashboard!B5` and
+`History!B2` and which the contract does not name, and `rateAsOf`, which owns
+the nine cells that mirror a rate onto another tab. The 8 excluded shapes are
+`Rates!B2` (a live `GOOGLEFINANCE` lookup, replaced by dated records) and the
+seven cells of `History` row 2 (a live formula mirror, not a snapshot).
+
+The earlier "roughly 25 distinct computations" was an estimate that had never
+been checked; 25 is between the 12 owning computations and the 72 shapes, and
+is neither. The data is
 tiny — 17 accounts, 56 installments, 1 transaction, 1 snapshot — so the work is
 almost entirely correctness, not scale. Four known spreadsheet defects are
 corrected rather than ported (D4–D7 in the spec). Three change how a figure is

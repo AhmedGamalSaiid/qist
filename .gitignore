@@ -24,3 +24,12 @@ Thumbs.db
 *.tmp
 .idea/
 .vscode/
+
+# Local development database (regenerate with `npm run db:migrate:local`)
+.data/
+
+# Build and tool output
+dist/
+.wrangler/
+coverage/
+*.tsbuildinfo
