@@ -69,6 +69,8 @@ export function derivationFixture(): DerivationFixture {
       id: row.id,
       name: row.name,
       amountMinor: row.amountMinor,
+      reversesId: null,
+      cardId: null,
     })),
     installments: mapInstallments(dump, h, at).map((row) => ({
       id: row.id,

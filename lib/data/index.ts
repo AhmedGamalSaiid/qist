@@ -14,3 +14,16 @@ export { atomically } from './atomically'
 export { recordCorrection } from './corrections'
 export { recordAudit } from './audit'
 export { setBalanceMode, accountBalance } from './accounts'
+export {
+  provisionHousehold,
+  type ProvisionHouseholdInput,
+  claimMigratedHousehold,
+  type ClaimMigratedHouseholdInput,
+} from './provisioning'
+export { assertWriter, assertAdmin } from './authz'
+export { createCard, updateCard, type CardInput, type CreateCardInput, type UpdateCardInput } from './cards'
+export {
+  applyCardConsolidation,
+  type ApplyCardConsolidationInput,
+  type ConsolidationResult,
+} from './consolidation'

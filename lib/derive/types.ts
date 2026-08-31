@@ -33,6 +33,22 @@ export interface LiabilityLike {
   readonly id: string
   readonly name: string
   readonly amountMinor: EgpMinor
+  /** Set on a correcting entry (004). NULL for every imported row. */
+  readonly reversesId: string | null
+  /** Links this row to the card whose balance it states (004). NULL for
+   * every imported row and for non-card liabilities. */
+  readonly cardId: string | null
+}
+
+/** A card's identifying and scheduling attributes — not its balance, which
+ * is derived from `liabilities` (004, `cardBalances`). */
+export interface CardLike {
+  readonly id: string
+  readonly name: string
+  readonly limitMinor: MinorUnits | null
+  readonly statementDay: number | null
+  readonly dueDay: number | null
+  readonly sortOrder: number
 }
 
 export interface InstallmentLike {

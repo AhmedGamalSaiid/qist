@@ -124,6 +124,12 @@ export const installments = sqliteTable(
  * The three nullable columns exist per the feature-002 contract and import as
  * NULL. They are not invented defaults — the sheet has no value for them, and
  * a fabricated `statement_day` would be a derived value masquerading as a fact.
+ *
+ * `cards_household_name_unique` — `UNIQUE(household_id, lower(name))` — is
+ * **hand-folded into migration 0001** rather than declared here: it is a
+ * SQLite expression index, which this project's drizzle-kit version does not
+ * reliably emit from the schema builder (data-model.md, research.md R7). The
+ * constraint exists at the database level regardless.
  */
 export const cards = sqliteTable(
   'cards',

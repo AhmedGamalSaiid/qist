@@ -1,0 +1,49 @@
+name: CI
+
+# The repository's first CI workflow (spec FR-029, research.md R11): runs the
+# existing verification suites on both database drivers, the type check, the
+# monetary lint, and a fresh-import reconciliation on every proposed change.
+# No deploy step — reconciling here always runs against a fresh import, never
+# a corrected database (research.md R6).
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Monetary lint
+        run: npm run lint:money
+
+      - name: Coverage check
+        run: npm run coverage:check
+
+      - name: Test (both database drivers)
+        run: npm test
+
+      - name: Fresh-import parity
+        run: |
+          npm run db:migrate:local -- --db .data/ci-parity.db
+          npm run import -- --dump migration/sheet-dump.json --db .data/ci-parity.db
+          npm run reconcile -- --db .data/ci-parity.db
+
+      - name: Build (OpenNext) and check bundle size
+        run: |
+          npx opennextjs-cloudflare build
+          npx wrangler deploy --dry-run

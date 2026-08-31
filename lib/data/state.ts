@@ -1,6 +1,7 @@
-import type { EgpMinor, IsoDate } from '../money/types'
+import type { EgpMinor, IsoDate, MinorUnits } from '../money/types'
 import {
   assetMix,
+  cardBalances,
   holdingsByClass,
   installmentSummary,
   investmentTotal,
@@ -15,6 +16,7 @@ import {
 } from '../derive/index'
 import type {
   AccountLike,
+  CardLike,
   InstallmentLike,
   LiabilityLike,
   PropertyHoldingLike,
@@ -50,10 +52,23 @@ export interface SnapshotRow {
   readonly source: string
 }
 
+/** `card_payments` — genuinely empty today (003); the table exists so this
+ * feature has somewhere to write, and daily-action writes for it are
+ * deferred (spec, Deferred table). */
+export interface CardPaymentRow {
+  readonly id: string
+  readonly cardId: string
+  readonly dueOn: IsoDate
+  readonly amountMinor: EgpMinor
+  readonly paidAt: number | null
+}
+
 export interface HouseholdState {
   readonly householdId: string
   readonly timezone: string
   readonly today: IsoDate
+  /** The caller's own role in this household (contracts/http-api.md). */
+  readonly role: string
   readonly accounts: readonly AccountLike[]
   readonly propertyHoldings: readonly PropertyHoldingLike[]
   readonly liabilities: readonly LiabilityLike[]
@@ -62,6 +77,8 @@ export interface HouseholdState {
   readonly rates: readonly RateRecord[]
   /** Dated historical fact, carried over and excluded from pass/fail (FR-032). */
   readonly snapshots: readonly SnapshotRow[]
+  readonly cards: ReadonlyArray<CardLike & { balanceMinor: EgpMinor }>
+  readonly cardPayments: readonly CardPaymentRow[]
   readonly derived: ReturnType<typeof deriveAll>
 }
 
@@ -72,6 +89,7 @@ export function deriveAll(input: {
   installments: readonly InstallmentLike[]
   transactions: ReadonlyArray<TransactionLike & { egpMinor: EgpMinor }>
   rates: readonly RateRecord[]
+  cards: readonly CardLike[]
   today: IsoDate
   months: readonly IsoDate[]
 }) {
@@ -104,6 +122,7 @@ export function deriveAll(input: {
     unpaidByYear: unpaidByYear(input.installments),
     assetMix: assetMix(totalHoldings, investmentHoldings, input.propertyHoldings),
     monthlyRollup: monthlyRollup(input.transactions, input.months),
+    cardBalances: cardBalances(input.cards, input.liabilities),
   }
 }
 
@@ -111,16 +130,51 @@ export async function loadHouseholdState(
   repository: Repository,
   options: { today: IsoDate; months?: readonly IsoDate[] },
 ): Promise<HouseholdState> {
-  const [accounts, propertyHoldings, liabilities, installments, rawTransactions, rates, snapshotRows] =
-    await Promise.all([
-      repository.holdings.accounts(),
-      repository.holdings.propertyHoldings(),
-      repository.holdings.liabilities(),
-      repository.ledger.installments(),
-      repository.ledger.transactions(),
-      repository.rates.all(),
-      repository.history.snapshots(),
-    ])
+  const [
+    accounts,
+    propertyHoldings,
+    liabilities,
+    installments,
+    rawTransactions,
+    rates,
+    snapshotRows,
+    rawCards,
+    rawCardPayments,
+  ] = await Promise.all([
+    repository.holdings.accounts(),
+    repository.holdings.propertyHoldings(),
+    repository.holdings.liabilities(),
+    repository.ledger.installments(),
+    repository.ledger.transactions(),
+    repository.rates.all(),
+    repository.history.snapshots(),
+    repository.ledger.cards(),
+    repository.ledger.cardPayments(),
+  ])
+
+  const cards: CardLike[] = rawCards.map((row) => ({
+    id: row.id,
+    name: row.name,
+    limitMinor: row.limitMinor as MinorUnits | null,
+    statementDay: row.statementDay,
+    dueDay: row.dueDay,
+    sortOrder: row.sortOrder,
+  }))
+  const balanceByCardId = new Map(
+    cardBalances(cards, liabilities).map((b) => [b.cardId, b.balanceMinor]),
+  )
+  const cardsWithBalance = cards.map((card) => ({
+    ...card,
+    balanceMinor: balanceByCardId.get(card.id) ?? 0,
+  }))
+
+  const cardPayments: CardPaymentRow[] = rawCardPayments.map((row) => ({
+    id: row.id,
+    cardId: row.cardId,
+    dueOn: row.dueOn,
+    amountMinor: row.amountMinor,
+    paidAt: row.paidAt,
+  }))
 
   const snapshots: SnapshotRow[] = snapshotRows.map((row) => ({
     id: row.id,
@@ -157,6 +211,7 @@ export async function loadHouseholdState(
     householdId: repository.context.householdId,
     timezone: repository.context.timezone,
     today: options.today,
+    role: repository.context.role,
     accounts,
     propertyHoldings,
     liabilities,
@@ -164,6 +219,8 @@ export async function loadHouseholdState(
     transactions,
     rates,
     snapshots,
+    cards: cardsWithBalance,
+    cardPayments,
     derived: deriveAll({
       accounts,
       propertyHoldings,
@@ -171,6 +228,7 @@ export async function loadHouseholdState(
       installments,
       transactions,
       rates,
+      cards,
       today: options.today,
       months,
     }),

@@ -37,7 +37,12 @@ describe('data-layer surface', () => {
     const exported = Object.keys(dataLayer).sort()
     expect(exported).toEqual([
       'accountBalance',
+      'applyCardConsolidation',
+      'assertAdmin',
+      'assertWriter',
       'atomically',
+      'claimMigratedHousehold',
+      'createCard',
       'createRepository',
       'deriveAll',
       'householdContextFor',
@@ -45,9 +50,11 @@ describe('data-layer surface', () => {
       'listHouseholdIds',
       'loadHouseholdState',
       'ownerContextFor',
+      'provisionHousehold',
       'recordAudit',
       'recordCorrection',
       'setBalanceMode',
+      'updateCard',
     ])
   })
 

@@ -88,3 +88,129 @@ export class CorrectionCycleError extends Error {
     this.chain = chain
   }
 }
+
+/**
+ * Feature 004's typed failures (contracts/data-layer.md). Each maps to
+ * exactly one HTTP outcome in `app/api/_lib/respond.ts` — one mapping table,
+ * never per-handler discretion.
+ */
+
+export class UnauthenticatedError extends Error {
+  constructor() {
+    super('No valid session is present. Sign in and retry.')
+    this.name = 'UnauthenticatedError'
+  }
+}
+
+export class NoHouseholdError extends Error {
+  readonly userId: string
+
+  constructor(userId: string) {
+    super(
+      `User ${userId} holds no household membership. Provisioning happens on first sign-in ` +
+        `(the auth hook), never as a side effect of a read.`,
+    )
+    this.name = 'NoHouseholdError'
+    this.userId = userId
+  }
+}
+
+export class MultipleHouseholdsError extends Error {
+  readonly userId: string
+  readonly householdIds: string[]
+
+  constructor(userId: string, householdIds: string[]) {
+    super(
+      `User ${userId} holds ${householdIds.length} household memberships (${householdIds.join(', ')}), ` +
+        `so no single context can be resolved. Membership management is deferred; failing loudly beats guessing.`,
+    )
+    this.name = 'MultipleHouseholdsError'
+    this.userId = userId
+    this.householdIds = householdIds
+  }
+}
+
+export class UnauthorizedRoleError extends Error {
+  readonly role: string
+  readonly requires: 'writer' | 'admin'
+
+  constructor(role: string, requires: 'writer' | 'admin') {
+    super(`Role "${role}" cannot perform this action; it requires ${requires} or above.`)
+    this.name = 'UnauthorizedRoleError'
+    this.role = role
+    this.requires = requires
+  }
+}
+
+export class OwnerUnconfiguredError extends Error {
+  constructor() {
+    super(
+      `An unclaimed migrated household exists and OWNER_EMAIL is not configured. Sign-in is ` +
+        `refused rather than silently provisioning a competing shell household — set OWNER_EMAIL ` +
+        `to the migrated household's real owner and retry (research.md R4).`,
+    )
+    this.name = 'OwnerUnconfiguredError'
+  }
+}
+
+export class CardNotFoundError extends Error {
+  readonly cardId: string
+
+  constructor(cardId: string) {
+    super(`No card ${cardId} in this household.`)
+    this.name = 'CardNotFoundError'
+    this.cardId = cardId
+  }
+}
+
+export interface ValidationReason {
+  readonly field: string
+  readonly message: string
+}
+
+export class CardValidationError extends Error {
+  readonly reasons: ValidationReason[]
+
+  constructor(reasons: ValidationReason[]) {
+    super(`Card input is invalid: ${reasons.map((r) => `${r.field} — ${r.message}`).join('; ')}`)
+    this.name = 'CardValidationError'
+    this.reasons = reasons
+  }
+}
+
+export class ProvisioningConflictError extends Error {
+  readonly userId: string
+
+  constructor(userId: string) {
+    super(`User ${userId} already holds a household membership; provisioning refuses to add a second one.`)
+    this.name = 'ProvisioningConflictError'
+    this.userId = userId
+  }
+}
+
+export class ClaimAlreadyMadeError extends Error {
+  readonly householdId: string
+
+  constructor(householdId: string) {
+    super(
+      `Household ${householdId}'s owner membership no longer belongs to the importer's placeholder ` +
+        `user — it has already been claimed. A claim is one-time by construction.`,
+    )
+    this.name = 'ClaimAlreadyMadeError'
+    this.householdId = householdId
+  }
+}
+
+export class AlreadyAppliedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AlreadyAppliedError'
+  }
+}
+
+export class NotApplicableError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'NotApplicableError'
+  }
+}

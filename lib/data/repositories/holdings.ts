@@ -70,6 +70,8 @@ export function holdingsRepository(client: AppClient, ctx: HouseholdContext) {
         id: row.id,
         name: row.name,
         amountMinor: row.amountMinor,
+        reversesId: row.reversesId,
+        cardId: row.cardId,
       }))
     },
   }

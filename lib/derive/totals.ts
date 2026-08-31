@@ -58,9 +58,26 @@ export function holdingsByClass(
   return positions
 }
 
+/**
+ * A row whose id appears as another row's `reverses_id` stops contributing;
+ * the correcting row contributes instead (004, data-model.md — the same
+ * reversed-entry rule `lib/data/corrections.ts`'s `netEntries` applies to
+ * `transactions`, restated here rather than imported so `lib/derive/` stays
+ * driver-free and import-cycle-free against `lib/data/`).
+ *
+ * The identity on data with no reversals — every fresh import of the dump —
+ * which is why every 003 golden figure is unchanged (spec FR-024, SC-008).
+ */
+export function nonReversed<T extends { id: string; reversesId: string | null }>(
+  rows: readonly T[],
+): T[] {
+  const reversed = new Set(rows.map((r) => r.reversesId).filter((id): id is string => id !== null))
+  return rows.filter((row) => !reversed.has(row.id))
+}
+
 /** `Total!K2 = SUM(J4:J10)`. A plain sum: no tolerance, ever (FR-029). */
 export function shortTermLiabilities(liabilities: readonly LiabilityLike[]): EgpMinor {
-  return liabilities.reduce((sum, l) => sum + l.amountMinor, 0)
+  return nonReversed(liabilities).reduce((sum, l) => sum + l.amountMinor, 0)
 }
 
 /**

@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import type { AppClient, Statement } from '../../db/client'
-import { transactions } from '../../db/schema/index'
+import { liabilities, transactions } from '../../db/schema/index'
 import { CorrectionCycleError } from '../errors'
 import type { IsoDate, MinorUnits } from '../money/types'
 import { atomically } from './atomically'
@@ -49,14 +49,14 @@ export async function recordCorrection(
   ctx: HouseholdContext,
   input: CorrectionInput,
 ): Promise<void> {
-  const original = await loadRow(client, ctx, input.reversesId)
+  const original = await loadReversibleRow(client, ctx, transactions, input.reversesId)
   if (original === null) {
     throw new TypeError(
       `Cannot correct ${input.reversesId}: no such transaction in this household.`,
     )
   }
 
-  await assertNoCycle(client, ctx, input.id, input.reversesId)
+  await assertNoCycle(client, ctx, transactions, input.id, input.reversesId)
 
   // Every statement exists before the atom opens (R9a). The cycle walk above
   // is a read, so it happens first and its conclusion is encoded in what is
@@ -93,6 +93,15 @@ export async function recordCorrection(
 }
 
 /**
+ * Either table carrying the correction grammar (T041, 004). `transactions`
+ * and `liabilities` share the same `id` / `household_id` / `reverses_id` /
+ * `amount_minor` column shape, which is what makes one generic walk correct
+ * for both — chains become possible on `liabilities` the moment
+ * `reverses_id` exists, whether or not a given feature creates one.
+ */
+export type ReversibleTable = typeof transactions | typeof liabilities
+
+/**
  * Walk `reverses_id` from the proposed row and reject if it revisits a row
  * already seen.
  *
@@ -104,6 +113,7 @@ export async function recordCorrection(
 export async function assertNoCycle(
   client: AppClient,
   ctx: HouseholdContext,
+  table: ReversibleTable,
   proposedId: string,
   reversesId: string,
 ): Promise<void> {
@@ -117,25 +127,26 @@ export async function assertNoCycle(
       throw new CorrectionCycleError(chain)
     }
     seen.add(cursor)
-    const row: { reversesId: string | null } | null = await loadRow(client, ctx, cursor)
+    const row: { reversesId: string | null } | null = await loadReversibleRow(client, ctx, table, cursor)
     if (row === null) break
     cursor = row.reversesId
   }
 }
 
-async function loadRow(
+async function loadReversibleRow(
   client: AppClient,
   ctx: HouseholdContext,
+  table: ReversibleTable,
   id: string,
 ): Promise<{ id: string; reversesId: string | null; amountMinor: number } | null> {
   const rows = await client.db
     .select({
-      id: transactions.id,
-      reversesId: transactions.reversesId,
-      amountMinor: transactions.amountMinor,
+      id: table.id,
+      reversesId: table.reversesId,
+      amountMinor: table.amountMinor,
     })
-    .from(transactions)
-    .where(and(eq(transactions.householdId, ctx.householdId), eq(transactions.id, id)))
+    .from(table)
+    .where(and(eq(table.householdId, ctx.householdId), eq(table.id, id)))
     .limit(1)
   return rows[0] ?? null
 }

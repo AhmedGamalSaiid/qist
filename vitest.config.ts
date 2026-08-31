@@ -18,6 +18,10 @@ const D1_SUITES = [
   'tests/isolation/**/*.test.ts',
   'tests/golden/import-*.test.ts',
   'tests/golden/arabic.test.ts',
+  'tests/auth/**/*.test.ts',
+  'tests/contract/**/*.test.ts',
+  'tests/unit/cards.test.ts',
+  'tests/unit/consolidation.test.ts',
 ]
 
 export default defineConfig({

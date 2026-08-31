@@ -16,6 +16,7 @@ yarn-error.log*
 # Environment / secrets
 .env
 .env.*
+.dev.vars
 
 # OS / editor noise
 .DS_Store
@@ -31,5 +32,7 @@ Thumbs.db
 # Build and tool output
 dist/
 .wrangler/
+.next/
+.open-next/
 coverage/
 *.tsbuildinfo

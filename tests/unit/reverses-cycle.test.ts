@@ -71,7 +71,7 @@ describe('reverses_id cycle prevention', () => {
     // B already reverses A. A row reversing B, whose id is A, would close the
     // loop: A -> B -> A. The walk sees A again and refuses.
     await expect(
-      assertNoCycle(client, ctx, 'TXA00000000000000000000000', 'TXB00000000000000000000000'),
+      assertNoCycle(client, ctx, transactions, 'TXA00000000000000000000000', 'TXB00000000000000000000000'),
     ).rejects.toThrow(CorrectionCycleError)
   })
 
@@ -83,7 +83,7 @@ describe('reverses_id cycle prevention', () => {
     await insert(client, ctx, 'TXC00000000000000000000000', 'TXB00000000000000000000000', 10_000)
 
     await expect(
-      assertNoCycle(client, ctx, 'TXA00000000000000000000000', 'TXC00000000000000000000000'),
+      assertNoCycle(client, ctx, transactions, 'TXA00000000000000000000000', 'TXC00000000000000000000000'),
     ).rejects.toThrow(CorrectionCycleError)
   })
 
@@ -94,7 +94,7 @@ describe('reverses_id cycle prevention', () => {
 
     let thrown: unknown
     try {
-      await assertNoCycle(client, ctx, 'TXA00000000000000000000000', 'TXB00000000000000000000000')
+      await assertNoCycle(client, ctx, transactions, 'TXA00000000000000000000000', 'TXB00000000000000000000000')
     } catch (error) {
       thrown = error
     }

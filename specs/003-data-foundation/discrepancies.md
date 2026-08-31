@@ -68,3 +68,22 @@ edit (FR-013, FR-015).
 
 The same three-way naming applies to HSBC (`HSBC C.C` / `HSBC CC` / `CC HSBC`),
 but both its sources record 0, so merging HSBC changes no figure.
+
+#### D7 anchor ids (feature 004, `lib/data/consolidation.ts`)
+
+Deterministic functions of the frozen dump (`lib/import/ids.ts`, `derivedId`/
+`derivedHouseholdId`) — computed once here and pinned as a constant block in
+`applyCardConsolidation`. Valid while the dump is frozen and cutover is
+deferred (research.md R6); a fresh re-import of the same dump reproduces
+these exact ids.
+
+`householdId = 194NRCNHWEBDB912QKQTTGVT5F`
+
+| Card | Table | Imported name | Imported value | Row id |
+|---|---|---|---|---|
+| ADIB | `cards` | `ADIB CC` | — | `26HTBHY5WTV9JXCWQ51ES08X7R` |
+| ADIB | `liabilities` | `CC ADIB` | 0.00 EGP | `2VCEP5AERT8V960FZ16VJR3XWT` |
+| ADIB | `accounts` (unreachable) | `ADIB C.C` | 600.00 EGP | `7WW6SB50M15K858W035D1NQ8R8` |
+| HSBC | `cards` | `HSBC CC` | — | `6VQ21EMYXDPHGR8JEP672AQH4A` |
+| HSBC | `liabilities` | `CC HSBC` | 0.00 EGP | `5C28XRHRGS7W34FW3K4XB3HAT1` |
+| HSBC | `accounts` (unreachable) | `HSBC C.C` | 0.00 EGP | `4H0DXJ617TMX941Q2Z9PKAHF0V` |

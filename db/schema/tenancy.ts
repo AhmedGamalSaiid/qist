@@ -18,15 +18,20 @@ export const households = sqliteTable('households', {
 })
 
 /**
- * Auth flows are feature 004. This table exists so `audit_log` and
- * `memberships` have something real to reference — an audit entry whose actor
- * is an unvalidated string is not a record of who did anything.
+ * Better Auth's user model maps onto this table (research.md R1): `id`,
+ * `email`, `name`, `image`, `created_at` were already Better-Auth-compatible
+ * by design (003); `email_verified` and `updated_at` are the two columns
+ * Better Auth requires that 003 omitted. The importer's placeholder user
+ * stays `email_verified = 0` forever — it has no `auth_accounts` row and is
+ * never an authentication target (FR-011).
  */
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   name: text('name'),
   image: text('image'),
+  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().default(sql`0`),
   createdAt: integer('created_at').notNull(),
 })
 
