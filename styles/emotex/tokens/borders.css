@@ -1,0 +1,13 @@
+:root{
+  --bw-hairline:1px; /* @kind spacing */
+  --bw-default:1px; /* @kind spacing */
+  --bw-thick:2px; /* @kind spacing */
+
+  --divider:1px solid var(--border-subtle); /* @kind other */
+  --divider-strong:1px solid var(--border-active); /* @kind other */
+  --rule-amount:1px solid var(--white); /* @kind other */  /* the swap amount rule is full-strength white */
+
+  --focus-ring:0 0 0 2px var(--bg-surface),0 0 0 3px var(--border-focus); /* @kind shadow */
+  --focus-ring-inverse:0 0 0 2px var(--bg-inverse),0 0 0 3px var(--border-focus); /* @kind shadow */
+  --focus-offset:2px; /* @kind spacing */
+}

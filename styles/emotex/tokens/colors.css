@@ -1,0 +1,113 @@
+:root{
+  /* ---------- Foundation: neutrals (sampled from reference) ---------- */
+  --ink-1000:#000000;
+  --ink-950:#121212;
+  --ink-900:#141414;
+  --ink-850:#1a1a1a;
+  --ink-800:#1d1d1d;   /* panel / nav / modal base */
+  --ink-700:#262627;   /* elevated bar */
+  --ink-600:#333334;
+  --ink-500:#4a4a4a;
+  --ink-400:#6e6e6e;
+  --ink-300:#9a9a9a;
+  --ink-200:#c9c7c5;
+  --ink-100:#d6dcdd;   /* cool mist — light card base */
+  --ink-50:#f2f0ee;    /* warm off-white — action tile */
+  --ink-0:#f7f5f4;     /* brightest surface — primary button */
+  --white:#ffffff;
+
+  /* Presentation backdrop the reference stages its devices on */
+  --stage:#545d5d;
+
+  /* ---------- Foundation: accent (orange) ---------- */
+  --orange-100:#ffd6bd;
+  --orange-300:#ff9152;
+  --orange-500:#ff7a33;  /* peak accent sampled from the hero gradient */
+  --orange-600:#f2681f;
+  --orange-700:#c9540f;
+  --orange-900:#7a3208;
+
+  /* ---------- Foundation: deep teal (the gradient's cold pole) ---------- */
+  --teal-900:#0d1c1c;
+  --teal-800:#122726;
+  --teal-700:#142d2e;
+  --teal-600:#1d4142;
+  --teal-400:#3d6b66;
+
+  /* ---------- Semantic: background ---------- */
+  --bg-canvas:var(--ink-900);
+  --bg-surface:var(--ink-800);
+  --bg-elevated:var(--ink-700);
+  --bg-input:var(--ink-850);
+  --bg-modal:var(--ink-800);
+  --bg-nav:var(--ink-800);
+  --bg-card:var(--ink-800);
+  --bg-inverse:var(--ink-0);
+  --bg-mist:var(--ink-100);
+
+  /* ---------- Semantic: component surfaces ----------
+     Every filled component surface resolves through one of these rather than
+     reaching into the ink ramp directly. Hover is one step up the ramp. */
+  --surface-tray:var(--ink-900);          /* keypad + swap tray base */
+  --surface-tray-hover:var(--ink-850);
+  --surface-chip:var(--ink-700);          /* token chip, tertiary button, percent selected */
+  --surface-chip-hover:var(--ink-600);
+  --surface-mark:var(--ink-700);          /* token mark fallback plate */
+  --surface-mark-inset:rgba(255,255,255,.10);
+  --surface-tile:var(--ink-50);           /* light action tile */
+  --surface-tile-hover:var(--white);
+  --surface-inverse:var(--ink-0);         /* primary button, solid icon button */
+  --surface-inverse-hover:var(--white);
+
+  /* ---------- Semantic: text ---------- */
+  --text-primary:var(--white);
+  --text-secondary:var(--ink-300);
+  --text-tertiary:var(--ink-400);
+  --text-disabled:var(--ink-500);
+  --text-placeholder:#7c7c7c;
+  --text-inverse:#1f1f1f;
+  --text-inverse-secondary:#5a5a5a;
+  --text-accent:var(--orange-500);
+  /* Opt-in, NOT wired up. --text-tertiary measures 3.8:1 on --bg-canvas, below
+     the 4.5:1 AA threshold for the 13px metadata it carries. This value is the
+     nearest step that clears AA (4.9:1) if the product chooses compliance over
+     exact reference fidelity. See the production-readiness report. */
+  --text-tertiary-aa:#8a8a8a;
+
+  /* ---------- Semantic: border ---------- */
+  --border-hairline:rgba(255,255,255,.07);
+  --border-subtle:rgba(255,255,255,.12);
+  --border-default:rgba(255,255,255,.18);
+  --border-active:rgba(255,255,255,.42);
+  --border-strong:var(--white);
+  --border-focus:var(--orange-500);
+  --border-inverse:rgba(0,0,0,.10);
+
+  /* ---------- Semantic: accent ---------- */
+  --accent:var(--orange-500);
+  --accent-hover:var(--orange-300);
+  --accent-active:var(--orange-600);
+  --accent-muted:rgba(255,122,51,.14);
+  --accent-glow:rgba(255,122,51,.45);
+  --accent-on:#1f1f1f;
+
+  /* ---------- Semantic: states ----------
+     The reference renders value change in plain white with a directional arrow,
+     so positive/negative are deliberately desaturated: they read as data, not alerts. */
+  --positive:#6fbf9a;
+  --positive-muted:rgba(111,191,154,.14);
+  --negative:#e05b3f;
+  --negative-muted:rgba(224,91,63,.14);
+  --warning:var(--orange-300);
+  --warning-muted:rgba(255,145,82,.14);
+  --info:#7d9bb5;
+  --info-muted:rgba(125,155,181,.14);
+  --neutral:var(--ink-300);
+
+  /* ---------- Overlays ---------- */
+  --overlay-scrim:rgba(10,10,10,.72);
+  --overlay-backdrop:rgba(18,18,18,.55);
+  --overlay-press:rgba(255,255,255,.06);
+  --overlay-press-inverse:rgba(0,0,0,.06);
+  --overlay-hover:rgba(255,255,255,.04);
+}

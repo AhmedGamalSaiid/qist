@@ -1,0 +1,15 @@
+/* ---------- Responsive: container queries on the panel ----------
+   The reference is mobile only. The panel is a component that can appear at
+   several widths inside one host page, so it adapts to its OWN inline size
+   via a container query, never a viewport media query. No per-breakpoint
+   redesign: above --panel-w-max the panel simply stops growing and centres
+   in the available stage — the same mobile composition with more space
+   around it, not a different desktop layout. Below --bp-sm, one compression
+   step reassigns existing spacing tokens so the gutter doesn't crowd the
+   balance lockup and action-tile labels; every screen and component keeps
+   reading the same --gutter-screen / --gap-tile custom properties, so this
+   is a token reassignment in one place, not a component or screen change. */
+.emx-panel{position:relative;width:100%;max-width:var(--panel-w-max);margin-inline:auto;overflow:hidden;border-radius:var(--radius-panel);background:var(--bg-surface);box-shadow:var(--shadow-panel);container-type:inline-size;container-name:emx-panel}
+@container emx-panel (max-width:359px){
+  .emx-panel{--gutter-screen:var(--space-16);--gap-tile:var(--space-6)}
+}

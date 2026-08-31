@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <title>Qist favicon 16</title>
+  <desc>Symbol only, small-size variant, per the floor rule: no wordmark below a 32px symbol, and the master drawing is not used below 32px. Full bleed — the mark renders at 16px, the tile size, with no extra inset, because the 120 artboard already carries its own padding: the ink fills 0.75 of it, so 12.00px of ink sits inside a 16px tile and the 8-unit stroke computes to 1.07px. Tile is ink-900 #141414 at radius 2.0, 12.5% of the tile in both sizes, so the two favicons match each other and the mark holds on light and dark browser chrome.</desc>
+  <rect width="16" height="16" rx="2.0" fill="#141414"></rect>
+  <svg x="0" y="0" width="16" height="16" viewBox="0 0 120 120">
+    <g transform="translate(-4,0)" fill="none" stroke-width="8" stroke-linecap="butt">
+        <path d="M40 18 L80 18 A22 22 0 0 1 98.8 28.58" stroke="#ff7a33"></path>
+        <path d="M102 40 L102 84" stroke="#f7f5f4"></path>
+        <path d="M116 102 L40 102 A22 22 0 0 1 21.2 91.42" stroke="#f7f5f4"></path>
+        <path d="M18 80 L18 40 A22 22 0 0 1 28.58 21.2" stroke="#f7f5f4"></path>
+    </g>
+  </svg>
+</svg>

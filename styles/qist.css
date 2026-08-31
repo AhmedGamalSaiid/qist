@@ -1,0 +1,101 @@
+/* ============================================================================
+   Qist's extension layer — the ONLY file in styles/ that Qist edits.
+
+   styles/emotex/ is a verbatim mirror of the Emotex design system. Keeping it
+   byte-identical means a future Emotex change is a re-import, not a merge, and
+   means every Qist-specific value is reviewable in one place: this file.
+
+   Two rules, both inherited from Emotex's own token architecture:
+     1. Never reach into the private ramp (--ink-*, --orange-*, --teal-*).
+        Add role-layer tokens that alias it, the way colors.css does.
+     2. A raw hex or px value in a component is a defect. If a value belongs to
+        the product, it belongs here first.
+   ========================================================================= */
+
+:root{
+  /* ---------- Shipped: introduced by the sign-in screen ---------- */
+
+  /* Monospace face. Not an Emotex token — Emotex is a two-face system and has
+     no monospace need. Qist does: CodeToken renders OWNER_EMAIL, an environment
+     variable the reader is expected to copy exactly, and a proportional face
+     makes character-level transcription errors invisible.
+     Self-hosted via next/font (app/layout.tsx), matching styles/fonts.css. */
+  --font-mono:var(--font-jetbrains-mono),"SFMono-Regular",Menlo,monospace;
+}
+
+/* ============================================================================
+   PENDING APPROVAL — not system tokens yet
+   ========================================================================= */
+
+/* The Arabic UI face. The sign-in board sets --font-ui and --font-display to
+   Alexandria at the screen root and zeroes the three tracking tokens, because
+   Latin tracking values break Arabic joining.
+
+   Alexandria is PENDING APPROVAL. Per the sign-in handoff it is deliberately
+   NOT added to the type stack, and this slot exists so the pending state is
+   visible in code rather than remembered by one person. Wire it here only when
+   the pairing is approved — at which point, per that handoff's decision 10,
+   the tracking reset should become part of an Arabic type scale rather than a
+   per-screen override.
+
+   Noto Kufi Arabic is the WORDMARK face only. It never appears in UI copy. */
+:root{
+  --font-ar-pending:"Alexandria",var(--font-ui);
+}
+
+/* ============================================================================
+   DECLARED GAPS — required by the product, deliberately unvalued
+
+   Each role below is a distinction the data contains and the UI must be able to
+   show. None has a value yet, and none is given a placeholder on purpose: a
+   defaulted colour is indistinguishable from a chosen one three months later,
+   and the audit in design/handoff/01 §8 reserves these decisions for the design
+   round that has not run yet.
+
+   Two constraints that round inherits:
+     - Emotex ships ONE accent. Six roles cannot share it.
+     - --warning currently aliases --orange-300, one step off the peak accent,
+       so "due" and "brand accent" are the same colour today. Three mutually
+       distinct statuses cannot be built without breaking that alias.
+
+   Source: design/handoff/01-design-system-and-sign-in.md §1.1–§1.3, §8.2.
+   Constitution: Principle VII (One Visual Language for Editability).
+   ========================================================================= */
+
+/*  --editable            §1.1  "you may type here". No design system ships
+                                this token; it is the load-bearing one here.
+    --read-only           §1.1  derived or historical; nobody may change it.
+    (not-permitted)       §1.1  viewer role. The app's answer is usually to show
+                                nothing at all — this may need no token, but it
+                                does need a stated position.
+
+    --status-paid         §1.2  \
+    --status-due          §1.2   >  three statuses, mutually distinguishable at
+    --status-overdue      §1.2  /   a glance in a long list.
+
+    --rate-fresh          §1.3  \
+    --rate-dated          §1.3   >  three degrees. A stale rate must never be
+    --rate-stale          §1.3  /   able to pass as a current one.
+
+    --not-recorded        §1.3  a value that was never recorded and is not
+                                recoverable. MUST NOT resolve to anything that
+                                can read as 0 — rendering it as a number states
+                                a falsehood about the household's money.
+    --balance-stated      §1.3  someone typed it.
+    --balance-derived     §1.3  computed from movements.
+    --superseded          §1.3  corrected row, still visible beside its
+                                correction; only the live one counts.          */
+
+/* ============================================================================
+   SANCTIONED RAW VALUES
+
+   The Google sign-in button is vendor-locked: Google's branding guidelines fix
+   its fill (#131314), border (#8E918F), label colour (#E3E3E3), hover
+   (#1b1b1c), type (Roboto Medium 500) and mark, and a non-conforming button can
+   fail Google's OAuth brand review. Those literals override Emotex INSIDE THAT
+   BUTTON ONLY and are not a precedent anywhere else in the product.
+
+   They are deliberately not tokenised: a token would imply they are ours to
+   change. Any lint that bans raw hex outside this file must exempt the Google
+   button component by path, not by value.
+   ========================================================================= */

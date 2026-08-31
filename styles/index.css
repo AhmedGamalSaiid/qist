@@ -1,0 +1,21 @@
+/* Qist stylesheet entry point — imported once, from app/layout.tsx.
+
+   Import order is Emotex's own (styles/emotex/styles.css), with two changes:
+   fonts.css is the repo-local next/font binding rather than the CDN version,
+   and qist.css is appended last so Qist's additions resolve after the system
+   they extend. Nothing else is reordered. */
+
+@import url("./fonts.css");
+@import url("./emotex/tokens/colors.css");
+@import url("./emotex/tokens/typography.css");
+@import url("./emotex/tokens/spacing.css");
+@import url("./emotex/tokens/sizing.css");
+@import url("./emotex/tokens/radius.css");
+@import url("./emotex/tokens/borders.css");
+@import url("./emotex/tokens/shadows.css");
+@import url("./emotex/tokens/gradients.css");
+@import url("./emotex/tokens/motion.css");
+@import url("./emotex/tokens/responsive.css");
+@import url("./emotex/tokens/base.css");
+@import url("./emotex/tokens/export.css");
+@import url("./qist.css");

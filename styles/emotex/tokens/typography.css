@@ -1,0 +1,84 @@
+:root{
+  /* size scale */
+  --fs-display-lg:64px;
+  --fs-display:52px;
+  --fs-h1:34px;
+  --fs-h2:26px;
+  --fs-h3:20px;
+  --fs-h4:17px;
+  --fs-body-lg:16px;
+  --fs-body:14px;
+  --fs-body-sm:13px;
+  --fs-caption:11px;
+  --fs-label:12px;
+  --fs-button:14px;
+  --fs-numeric-lg:44px;
+  --fs-numeric-md:30px;
+  --fs-numeric-sm:18px;
+
+  /* dedicated monetary lockup sizes — currency mark 46%, decimals 58% of the integer size */
+  --fs-money-xl:64px;
+  --fs-money-lg:52px;
+  --fs-money-md:34px;
+
+  /* weight */
+  --fw-thin:200; /* @kind font */
+  --fw-light:300; /* @kind font */
+  --fw-regular:400; /* @kind font */
+  --fw-medium:500; /* @kind font */
+
+  /* line height */
+  --lh-tight:1.0; /* @kind font */
+  --lh-snug:1.15; /* @kind font */
+  --lh-normal:1.4; /* @kind font */
+  --lh-relaxed:1.55; /* @kind font */
+  --lh-list:1.45; /* @kind font */   /* list-row description */
+
+  /* tracking — the display face is set slightly open, body slightly tight */
+  --ls-display:0.005em; /* @kind font */
+  --ls-heading:0.01em; /* @kind font */
+  --ls-body:0em; /* @kind font */
+  --ls-label:0.02em; /* @kind font */
+  --ls-caps:0.10em; /* @kind font */
+  --ls-numeric:-0.01em; /* @kind font */
+
+  /* money lockup — explicit scale + rhythm tokens (no hardcoded ratios in component CSS) */
+  --money-symbol-scale:0.46; /* @kind other */
+  --money-decimal-scale:0.58; /* @kind other */
+  --money-symbol-gap:0.02em; /* @kind other */
+  --lh-money:1; /* @kind font */
+
+  /* token mark fallback letter, as a ratio of the mark box. No fallback
+     letter is actually visible anywhere in the reference — every token/network
+     mark in the source carries a real icon — so this value cannot be measured.
+     It is an eyeballed estimate, originally set at a literal 13px on the
+     34px --token-icon-lg swap squares (≈0.38). A later pass routed it through
+     this token but copied the ratio from --money-symbol-scale (0.46) instead,
+     which rendered fallback letters at 15.6px with no reference basis for the
+     change. Reverted to the original 0.38 estimate: reference fidelity over
+     token-abstraction purity when the two conflict and neither is observed. */
+  --token-mark-label-scale:0.38; /* @kind other */
+}
+
+/* ---------- Type roles ---------- */
+.emx-display-lg{font:var(--fw-thin) var(--fs-display-lg)/var(--lh-tight) var(--font-display);letter-spacing:var(--ls-display)}
+.emx-display{font:var(--fw-thin) var(--fs-display)/var(--lh-tight) var(--font-display);letter-spacing:var(--ls-display)}
+.emx-h1{font:var(--fw-thin) var(--fs-h1)/var(--lh-snug) var(--font-display);letter-spacing:var(--ls-heading)}
+.emx-h2{font:var(--fw-thin) var(--fs-h2)/var(--lh-snug) var(--font-display);letter-spacing:var(--ls-heading)}
+.emx-h3{font:var(--fw-light) var(--fs-h3)/var(--lh-snug) var(--font-display);letter-spacing:var(--ls-heading)}
+.emx-h4{font:var(--fw-light) var(--fs-h4)/var(--lh-normal) var(--font-display);letter-spacing:var(--ls-heading)}
+.emx-body-lg{font:var(--fw-light) var(--fs-body-lg)/var(--lh-relaxed) var(--font-ui)}
+.emx-body{font:var(--fw-light) var(--fs-body)/var(--lh-relaxed) var(--font-ui)}
+.emx-body-sm{font:var(--fw-light) var(--fs-body-sm)/var(--lh-normal) var(--font-ui)}
+.emx-caption{font:var(--fw-light) var(--fs-caption)/var(--lh-normal) var(--font-ui);letter-spacing:var(--ls-label)}
+.emx-label{font:var(--fw-regular) var(--fs-label)/var(--lh-normal) var(--font-ui);letter-spacing:var(--ls-label)}
+.emx-button{font:var(--fw-regular) var(--fs-button)/1 var(--font-ui);letter-spacing:var(--ls-body)}
+.emx-numeric-lg{font:var(--fw-thin) var(--fs-numeric-lg)/1 var(--font-numeric);letter-spacing:var(--ls-numeric);font-variant-numeric:tabular-nums}
+.emx-numeric-md{font:var(--fw-thin) var(--fs-numeric-md)/1 var(--font-numeric);letter-spacing:var(--ls-numeric);font-variant-numeric:tabular-nums}
+.emx-numeric-sm{font:var(--fw-light) var(--fs-numeric-sm)/1 var(--font-numeric);font-variant-numeric:tabular-nums}
+.emx-money-xl,.emx-money-lg,.emx-money-md{display:flex;align-items:baseline;font-family:var(--font-numeric);font-weight:var(--fw-thin);letter-spacing:var(--ls-numeric);line-height:var(--lh-money);font-variant-numeric:tabular-nums}
+.emx-money-xl{font-size:var(--fs-money-xl)}
+.emx-money-lg{font-size:var(--fs-money-lg)}
+.emx-money-md{font-size:var(--fs-money-md)}
+.emx-money-xl .emx-money-mark,.emx-money-lg .emx-money-mark,.emx-money-md .emx-money-mark{font-size:calc(1em * var(--money-symbol-scale));margin-right:var(--money-symbol-gap)}
+.emx-money-xl .emx-money-frac,.emx-money-lg .emx-money-frac,.emx-money-md .emx-money-frac{font-size:calc(1em * var(--money-decimal-scale))}

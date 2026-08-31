@@ -1,0 +1,37 @@
+:root{
+  --blur-atmosphere:60px; /* @kind other */
+  --blur-backdrop:24px; /* @kind other */
+  --blur-scrim:2px; /* @kind other */   /* the one blur in the system, behind the sheet scrim */
+  --opacity-glow-strong:1; /* @kind other */
+  --opacity-glow:.55; /* @kind other */
+  --opacity-glow-soft:.28; /* @kind other */
+  --opacity-disabled:.38; /* @kind other */
+  --opacity-muted:.6; /* @kind other */
+  --opacity-placeholder:.45; /* @kind other */  /* zeroed amount before entry */
+  --opacity-readonly:.75; /* @kind other */     /* computed swap output */
+  --opacity-row-hover:.82; /* @kind other */    /* list row dims, never fills */
+  --opacity-rule:.9; /* @kind other */          /* the white swap rule */
+  --opacity-loader:.8; /* @kind other */
+
+  /* Hero mesh — the wallet card. Cool mist base, warm orange body, cold teal corner. */
+  --gradient-hero:
+    radial-gradient(58% 40% at 92% 6%, var(--teal-900) 0%, rgba(13,28,28,.85) 32%, rgba(13,28,28,0) 72%),
+    radial-gradient(52% 42% at 72% 46%, var(--orange-500) 0%, rgba(255,122,51,.82) 40%, rgba(255,122,51,0) 78%),
+    radial-gradient(46% 34% at 30% 22%, #efe6dc 0%, rgba(239,230,220,0) 70%),
+    linear-gradient(155deg,#dfe4e5 0%,var(--ink-100) 48%,#e2e0dd 100%);
+
+  /* Header band — same grammar on a dark base. */
+  --gradient-header:
+    radial-gradient(120% 180% at 78% -40%, var(--orange-500) 0%, rgba(255,122,51,.5) 30%, rgba(255,122,51,0) 62%),
+    radial-gradient(90% 140% at 100% 120%, var(--teal-700) 0%, rgba(20,45,46,0) 70%),
+    linear-gradient(180deg,#2a2724 0%,var(--ink-800) 100%);
+
+  /* Keypad bloom — a cold glow rising from behind the keys. */
+  --gradient-keypad-glow:radial-gradient(55% 46% at 50% 8%, var(--teal-700) 0%, rgba(20,45,46,0) 78%);
+
+  --gradient-corner-glow:radial-gradient(60% 60% at 100% 0%, var(--accent-glow) 0%, rgba(255,122,51,0) 70%);
+  --gradient-accent-line:linear-gradient(90deg,var(--orange-500) 0%,var(--orange-700) 100%);
+  --gradient-scrim-bottom:linear-gradient(180deg,rgba(29,29,29,0) 0%,var(--ink-800) 68%);
+  --gradient-scrim-top:linear-gradient(180deg,var(--ink-800) 0%,rgba(29,29,29,0) 100%);
+  --gradient-skeleton:linear-gradient(90deg,rgba(255,255,255,.03) 0%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.03) 100%); /* @kind color */
+}

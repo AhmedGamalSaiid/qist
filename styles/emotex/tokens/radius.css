@@ -1,0 +1,11 @@
+:root{
+  /* The reference is a sharp system. Radii are small and used sparingly:
+     panels and modals are the only large-radius surfaces. */
+  --radius-none:0px;
+  --radius-xs:2px;
+  --radius-sm:4px;    /* buttons, pills, keypad, nav action */
+  --radius-md:8px;    /* token icons, tiles */
+  --radius-lg:12px;
+  --radius-panel:20px;/* device panel, sheet, modal */
+  --radius-full:999px;/* avatars and dots only */
+}

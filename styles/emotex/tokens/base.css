@@ -1,0 +1,15 @@
+/* Focus fallback for components mounted outside a .emx-root ancestor.
+   The scoped rule below is the real treatment; this guarantees a visible ring
+   either way, because a component library cannot assume its host wrapper. */
+:focus-visible{outline:var(--bw-thick) solid var(--border-focus);outline-offset:var(--focus-offset)}
+.emx-root{background:var(--bg-canvas);color:var(--text-primary);font-family:var(--font-ui);font-weight:var(--fw-light);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.emx-root *,.emx-root *::before,.emx-root *::after{box-sizing:border-box}
+.emx-root :focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.emx-tabular{font-variant-numeric:tabular-nums}
+/* Expands an under-44px control's pointer/touch target to --hit-min without
+   changing a single rendered pixel. Applied by components whose measured
+   geometry is smaller than the minimum target; requires position:relative and
+   no overflow clipping on the host element. */
+.emx-hit::after{content:"";position:absolute;top:50%;left:50%;width:var(--hit-min);height:var(--hit-min);min-width:100%;min-height:100%;transform:translate(-50%,-50%)}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hover)}
