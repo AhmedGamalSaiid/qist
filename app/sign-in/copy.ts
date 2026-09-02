@@ -5,11 +5,11 @@ import type { Locale } from '../../lib/i18n/locale'
  * Arabic is written Egyptian Arabic, not translated; do not regenerate it
  * with machine translation.
  *
- * A4's Arabic block does not exist yet. It must be WRITTEN by a native
- * Egyptian Arabic speaker against the same three obligations as the English
- * (nothing was written; here is the fix; the refusal is deliberate), within
- * the volume in §5. `null` here is that gap, and the screen renders the
- * marked placeholder in its place — see AwaitingArabicCopy.
+ * A4's Arabic block was written by a native Egyptian Arabic speaker against
+ * the same three obligations as the English (nothing was written; here is
+ * the fix; the refusal is deliberate). Open naming question: "بيت" stands
+ * for household here and must match whatever Arabic term the rest of the
+ * product settles on.
  */
 
 /** A paragraph carrying the OWNER_EMAIL literal as a slot, wherever the language's word order puts it. */
@@ -27,8 +27,7 @@ export type SignInCopy = {
     readonly eyebrow: string
     readonly retry: string
     readonly copyLabel: string
-    /** `null` = AWAITING ARABIC COPY. */
-    readonly content: { readonly heading: string; readonly p1: string; readonly p2: Slotted } | null
+    readonly content: { readonly heading: string; readonly p1: string; readonly p2: Slotted }
   }
 }
 
@@ -65,9 +64,17 @@ const ar: SignInCopy = {
     eyebrow: 'تم رفض تسجيل الدخول',
     retry: 'جرّب تسجيل الدخول تاني',
     copyLabel: 'نسخ',
-    // AWAITING ARABIC COPY — heading, p1 and p2 (with the OWNER_EMAIL slot)
-    // to be written by a native Egyptian Arabic speaker. Not translated.
-    content: null,
+    // Written Egyptian Arabic, not translated, against the same three
+    // obligations as the English. Verbatim.
+    content: {
+      heading: 'الدخول مقفول لحد ما يتحدد مالك',
+      p1: 'الديبلويمنت ده فيه بيت اتنقل من الإكسل، ولسه محدش اتحدد كمالك ليه. لو حد سجّل دخول دلوقتي هيتعمل بيت تاني فاضي يزاحمه — فمحصلش حاجة خالص: لا حساب، ولا بيت، ولا جلسة.',
+      p2: [
+        'حط في ',
+        { slot: 'OWNER_EMAIL' },
+        ' حساب Google اللي المفروض يمتلك البيت المنقول، وبعدين سجّل دخول تاني. أول مرة الحساب ده يدخل بياخده. وأي حد تاني يسجّل دخول هياخد بيته الجديد عادي.',
+      ],
+    },
   },
 }
 

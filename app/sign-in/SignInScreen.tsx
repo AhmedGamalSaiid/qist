@@ -4,7 +4,7 @@ import { Alexandria } from "next/font/google";
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 import { GoogleSignInButton } from "../../components/google/GoogleSignInButton";
-import { BrandLockup, Button, CodeToken, Skeleton, StatusNotice } from "../../components/ui";
+import { BrandLockup, Button, CodeToken, StatusNotice } from "../../components/ui";
 import { authClient } from "../../lib/auth/client";
 import {
   LOCALE_COOKIE,
@@ -130,16 +130,10 @@ export function SignInScreen({ initialLocale, initialState }: SignInScreenProps)
             overflow: "auto",
           }}
         >
-          {copy.a4.content ? (
-            <StatusNotice tone="blocked" eyebrow={copy.a4.eyebrow} title={copy.a4.content.heading}>
-              <Paragraph>{copy.a4.content.p1}</Paragraph>
-              <Paragraph>{renderSlotted(copy.a4.content.p2, copy.a4.copyLabel)}</Paragraph>
-            </StatusNotice>
-          ) : (
-            <StatusNotice tone="blocked" eyebrow={copy.a4.eyebrow}>
-              <AwaitingArabicCopy copyLabel={copy.a4.copyLabel} />
-            </StatusNotice>
-          )}
+          <StatusNotice tone="blocked" eyebrow={copy.a4.eyebrow} title={copy.a4.content.heading}>
+            <Paragraph>{copy.a4.content.p1}</Paragraph>
+            <Paragraph>{renderSlotted(copy.a4.content.p2, copy.a4.copyLabel)}</Paragraph>
+          </StatusNotice>
         </div>
         <div
           style={{
@@ -237,56 +231,5 @@ function renderSlotted(segments: Slotted, copyLabel: string): ReactNode {
     ) : (
       <CodeToken key={i} value={OWNER_EMAIL_LITERAL} copyLabel={copyLabel} />
     ),
-  );
-}
-
-/* AWAITING ARABIC COPY — mockup scaffolding, not shipped UI. Stands in for
-   A4's Arabic heading and two paragraphs at the line counts the layout
-   expects (handoff §5: heading 2 lines, p1 ~5 lines, p2 ~4 lines plus the
-   token). The live CodeToken sits in its real position so the slot's inline
-   behaviour is already proven. Replace this whole block with the written
-   Arabic; do not translate the English. */
-function AwaitingArabicCopy({ copyLabel }: { copyLabel: string }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-16)" }}>
-      <span
-        className="emx-caption"
-        style={{
-          alignSelf: "flex-start",
-          padding: "3px 8px",
-          border: "var(--bw-hairline) dashed var(--warning)",
-          borderRadius: "var(--radius-xs)",
-          color: "var(--warning)",
-          fontFamily: "var(--font-ui)",
-          whiteSpace: "nowrap",
-        }}
-      >
-        <span dir="ltr" style={{ unicodeBidi: "isolate" }}>
-          AWAITING ARABIC COPY
-        </span>
-      </span>
-      <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
-        <Skeleton width="100%" height="26px" />
-        <Skeleton width="62%" height="26px" />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <Skeleton width="100%" />
-        <Skeleton width="100%" />
-        <Skeleton width="100%" />
-        <Skeleton width="100%" />
-        <Skeleton width="46%" />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Skeleton width="34%" />
-          <CodeToken value={OWNER_EMAIL_LITERAL} copyLabel={copyLabel} />
-          <Skeleton width="18%" />
-        </div>
-        <Skeleton width="100%" />
-        <Skeleton width="100%" />
-        <Skeleton width="100%" />
-        <Skeleton width="72%" />
-      </div>
-    </div>
   );
 }
