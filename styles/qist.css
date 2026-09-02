@@ -1,0 +1,141 @@
+/* ============================================================================
+   Qist's extension layer — the ONLY file in styles/ that Qist edits.
+
+   styles/emotex/ is a verbatim mirror of the Emotex design system. Keeping it
+   byte-identical means a future Emotex change is a re-import, not a merge, and
+   means every Qist-specific value is reviewable in one place: this file.
+
+   Two rules, both inherited from Emotex's own token architecture:
+     1. Never reach into the private ramp (--ink-*, --orange-*, --teal-*).
+        Add role-layer tokens that alias it, the way colors.css does.
+     2. A raw hex or px value in a component is a defect. If a value belongs to
+        the product, it belongs here first.
+   ========================================================================= */
+
+:root{
+  /* ---------- Shipped: introduced by the sign-in screen ---------- */
+
+  /* --font-mono lives in styles/fonts.css, beside Emotex's three faces, logged
+     there as a deliberate phase addition with the retyping rationale and
+     flagged as a substitution alongside Oxanium and Poppins (Sign in §2.2, §9.6). */
+
+  /* The A1 corner glow is atmosphere, not a mark, so it mirrors with the
+     layout: Emotex's --gradient-corner-glow is anchored top-right (`at 100% 0%`)
+     for LTR, and the RTL panel needs the same stops anchored top-left. Same
+     accent-glow stop and the same transparent orange stop as the Emotex token —
+     only the anchor moves (Sign in §1.2, decision 4). */
+  --gradient-corner-glow-rtl:radial-gradient(60% 60% at 0% 0%, var(--accent-glow) 0%, rgba(255,122,51,0) 70%);
+}
+
+/* ============================================================================
+   APP-LEVEL RESET
+
+   Emotex's base.css styles .emx-root and its descendants; it never touches the
+   document body because the design tool supplies that. The application does
+   not: the sign-in board's own helmet zeroes the body margin so a panel sits
+   flush at 390px, and the app needs the same. This is the only document-level
+   rule Qist adds.
+   ========================================================================= */
+body{margin:0}
+
+/* ============================================================================
+   LAYOUT PATTERN — an entering state does not reposition what was already there
+
+   Written into the sign-in handoff §1.1 after A2, A3 and A5 were found to move
+   the mark by 23px and 47px: a notice's height is absorbed by flexible space,
+   never by a region that positions something else. It binds on Home, so it is
+   two classes here rather than a sign-in fix.
+
+   .qist-anchored      A full-width layer taken OUT OF FLOW and pinned to a
+                       fraction of the panel height (--anchor-y), with its
+                       centre on that line. line-height:0 kills the descender
+                       leading an inline-flex child would otherwise add. What
+                       sits on it is positioned by the panel alone; nothing that
+                       enters below can move it. On Sign in the mark's layer is
+                       at 45.5%, A1's own centre, in A1/A2/A3/A5.
+   .qist-holds-bottom  The region that owns the bottom edge: margin-top:auto
+                       takes all the surplus, so a notice appearing inside it
+                       eats that surplus instead of pushing anything.
+   The host panel must be the positioning context (position:relative — Emotex's
+   .emx-panel already is). A4 is the stated exception: its mark is top-anchored
+   in flow and was already invariant.
+   ========================================================================= */
+.qist-anchored{position:absolute;inset-inline:0;top:var(--anchor-y,50%);transform:translateY(-50%);display:flex;justify-content:center;line-height:0}
+.qist-holds-bottom{margin-top:auto}
+
+/* ============================================================================
+   PENDING APPROVAL — not system tokens yet
+   ========================================================================= */
+
+/* The Arabic UI face. The sign-in board sets --font-ui and --font-display to
+   Alexandria at the screen root and zeroes the three tracking tokens, because
+   Latin tracking values break Arabic joining.
+
+   Alexandria is PENDING APPROVAL. Per the sign-in handoff it is deliberately
+   NOT added to the type stack, and this slot exists so the pending state is
+   visible in code rather than remembered by one person. Wire it here only when
+   the pairing is approved — at which point, per that handoff's decision 10,
+   the tracking reset should become part of an Arabic type scale rather than a
+   per-screen override.
+
+   Noto Kufi Arabic is the WORDMARK face only. It never appears in UI copy. */
+:root{
+  --font-ar-pending:"Alexandria",var(--font-ui);
+}
+
+/* ============================================================================
+   DECLARED GAPS — required by the product, deliberately unvalued
+
+   Each role below is a distinction the data contains and the UI must be able to
+   show. None has a value yet, and none is given a placeholder on purpose: a
+   defaulted colour is indistinguishable from a chosen one three months later,
+   and the audit in design/handoff/01 §8 reserves these decisions for the design
+   round that has not run yet.
+
+   Two constraints that round inherits:
+     - Emotex ships ONE accent. Six roles cannot share it.
+     - --warning currently aliases --orange-300, one step off the peak accent,
+       so "due" and "brand accent" are the same colour today. Three mutually
+       distinct statuses cannot be built without breaking that alias.
+
+   Source: design/handoff/01-design-system-and-sign-in.md §1.1–§1.3, §8.2.
+   Constitution: Principle VII (One Visual Language for Editability).
+   ========================================================================= */
+
+/*  --editable            §1.1  "you may type here". No design system ships
+                                this token; it is the load-bearing one here.
+    --read-only           §1.1  derived or historical; nobody may change it.
+    (not-permitted)       §1.1  viewer role. The app's answer is usually to show
+                                nothing at all — this may need no token, but it
+                                does need a stated position.
+
+    --status-paid         §1.2  \
+    --status-due          §1.2   >  three statuses, mutually distinguishable at
+    --status-overdue      §1.2  /   a glance in a long list.
+
+    --rate-fresh          §1.3  \
+    --rate-dated          §1.3   >  three degrees. A stale rate must never be
+    --rate-stale          §1.3  /   able to pass as a current one.
+
+    --not-recorded        §1.3  a value that was never recorded and is not
+                                recoverable. MUST NOT resolve to anything that
+                                can read as 0 — rendering it as a number states
+                                a falsehood about the household's money.
+    --balance-stated      §1.3  someone typed it.
+    --balance-derived     §1.3  computed from movements.
+    --superseded          §1.3  corrected row, still visible beside its
+                                correction; only the live one counts.          */
+
+/* ============================================================================
+   SANCTIONED RAW VALUES
+
+   The Google sign-in button is vendor-locked: Google's branding guidelines fix
+   its fill (#131314), border (#8E918F), label colour (#E3E3E3), hover
+   (#1b1b1c), type (Roboto Medium 500) and mark, and a non-conforming button can
+   fail Google's OAuth brand review. Those literals override Emotex INSIDE THAT
+   BUTTON ONLY and are not a precedent anywhere else in the product.
+
+   They are deliberately not tokenised: a token would imply they are ours to
+   change. Any lint that bans raw hex outside this file must exempt the Google
+   button component by path, not by value.
+   ========================================================================= */

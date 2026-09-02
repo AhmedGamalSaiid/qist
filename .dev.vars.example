@@ -1,0 +1,16 @@
+# Copy to .dev.vars (gitignored) and fill in real values for local dev.
+# Never commit .dev.vars — it holds real secrets.
+
+# Google OAuth client (Google Cloud Console). Scopes are minimal
+# (openid email profile); no offline access is requested (research.md R2).
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Better Auth's session-signing secret. Generate with:
+#   openssl rand -base64 32
+BETTER_AUTH_SECRET=
+
+# The email of the migrated household's real owner (research.md R4). Leave
+# unset on a deployment with no unclaimed migrated household — sign-in fails
+# closed otherwise while one exists.
+OWNER_EMAIL=

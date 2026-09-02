@@ -228,3 +228,100 @@ Same day, app and sheet side by side, Installments screen:
 | ☐ | Wide tables scroll inside their own container |
 | ☐ | The bottom nav never covers the last row of a list |
 | ☐ | Desktop is the same layout enlarged — nothing missing, nothing desktop-only |
+
+---
+
+## 11. Credit Card Payments & Monthly Cash-Flow Planning (spec 002)
+
+Run `setupCreditCardPlanning()` once from the Apps Script editor before this
+section (see `specs/002-credit-card-planning/quickstart.md`). Record the
+SC-005 baseline (every installment/dashboard figure) **before** adding any
+CC data.
+
+### 11.1 Per-screen matrix — EN/LTR and AR/RTL
+
+| Screen | EN/LTR | AR/RTL | What to verify |
+|---|---|---|---|
+| Cards | ☐ | ☐ | Card chips, add form, per-card grouped-by-month lists, still-to-pay total, "nothing due" state |
+| Plan | ☐ | ☐ | Month nav (prev/next), income/verdict card, dated timeline, "+ Card payment" button |
+| Forecast | ☐ | ☐ | 12-row table, shortage rows marked, projection label, row tap opens Plan |
+| Home (plan card) | ☐ | ☐ | Month total, nearest unpaid line, shortage indicator, tap opens Plan |
+
+### 11.2 Allowlist negative tests (five new callers)
+
+Paste the function below into the same temporary `zz_test` file used in
+section 2 (Files → + → Script → `zz_test` if you don't still have it), run
+`test_ccAllowlistRejections`, read View → Logs, then **delete the file**
+(or just the function, if you're keeping `zz_test` for future features).
+
+Every attempt must be **DENIED**. A single ALLOWED line means the write
+guard is broken — do not deploy.
+
+```javascript
+/**
+ * TEMPORARY — CC Payments allowlist negative tests. Delete after running.
+ * Each case attempts a write that must be refused by guardedWrite().
+ * Nothing here should ever modify the sheet. Requires setupCreditCardPlanning()
+ * to have already run once (CC Payments tab must exist).
+ */
+function test_ccAllowlistRejections() {
+  var cases = [
+    // caller, sheet, a1, values, why it must be denied
+    ['addCcPayment',       'Data',        'A2:F2',  [['x', 'x', 'x', 'x', 'x', 'x']], 'wrong sheet'],
+    ['addCcPayment',       'CC Payments', 'A1:F1',  [['x', 'x', 'x', 'x', 'x', 'x']], 'header row'],
+    ['addCcPayment',       'CC Payments', 'A501:F501', [['x', 'x', 'x', 'x', 'x', 'x']], 'past row 500'],
+    ['addCcPayment',       'CC Payments', 'A2:G2',  [['x', 'x', 'x', 'x', 'x', 'x', 'x']], 'stretched past column F'],
+    ['addCcPayment',       'CC Payments', 'A2:F3',  [['x', 'x', 'x', 'x', 'x', 'x'], ['x', 'x', 'x', 'x', 'x', 'x']], 'multi-row target'],
+    ['setCcPaymentStatus', 'CC Payments', 'A2',     [['Yes']],                'wrong column (card, not paid)'],
+    ['setCcPaymentStatus', 'CC Payments', 'E1',     [['Yes']],                'header row'],
+    ['setCcPaymentStatus', 'CC Payments', 'E501',   [['Yes']],                'past row 500'],
+    ['setCcPaymentStatus', 'Installments','E2',     [['Yes']],                'wrong sheet (Installments E2 looks similar)'],
+    ['updateCcPayment',    'CC Payments', 'H7:H7',  [['x']],                  'card-list column (should be A:F)'],
+    ['updateCcPayment',    'CC Payments', 'A2:F2',  [['x', 'x', 'x', 'x', 'x']], 'shape mismatch — 5 values for a 6-column range'],
+    ['deleteCcPayment',    'CC Payments', 'A1:F1',  [['', '', '', '', '', '']], 'header row'],
+    ['deleteCcPayment',    'CC Payments', 'H2:H4',  [['', '', '']],           'settings block, not the payments body'],
+    ['setSalary',          'CC Payments', 'I1',     [[2250]],                 'above the settings block'],
+    ['setSalary',          'CC Payments', 'I5',     [[2250]],                 'below the settings block'],
+    ['setSalary',          'CC Payments', 'H2',     [[2250]],                 'label column, not the value column'],
+    ['setSalary',          'CC Payments', 'I2:I4',  [[2250], ['USD'], [27]],  'multi-row target (three single-cell writes only)'],
+    ['notARealCcRpc',      'CC Payments', 'A2',     [['x']],                  'unknown caller']
+  ];
+
+  var denied = 0, allowed = 0;
+  cases.forEach(function (c) {
+    try {
+      guardedWrite(c[0], c[1], c[2], c[3]);
+      allowed++;
+      Logger.log('ALLOWED (BUG!) %s -> %s!%s — %s', c[0], c[1], c[2], c[4]);
+    } catch (e) {
+      denied++;
+      Logger.log('denied  %s -> %s!%s — %s (%s)', c[0], c[1], c[2], c[4], e.message);
+    }
+  });
+  Logger.log('--- %s denied, %s allowed (allowed MUST be 0) ---', denied, allowed);
+}
+```
+
+| ☐ | Check |
+|---|---|
+| ☐ | Every line in the log reads `denied` and the summary says `allowed MUST be 0` → `0 allowed` |
+| ☐ | `CC Payments!A1:F1`, `H2:H6`, `H7:H26` are unchanged afterward |
+| ☐ | `addCcPayment` on a full table (temporarily fill `A500`, then run it via the app or `addCcPayment({...})` from the editor) returns `LOG_FULL` — clear `A500` afterward |
+| ☐ | The temporary `zz_test` file/function is deleted afterward |
+
+### 11.3 Feature checks
+
+| ☐ | Check |
+|---|---|
+| ☐ | Home → Plan → "+ Card payment" → Submit is ≤ 3 taps (FR-040) |
+| ☐ | Status toggle is 1 tap each way and survives a refresh; transaction log and account balances unchanged (SC-010) |
+| ☐ | Adding a duplicate (same card+amount+due date, or matching an installment's date+amount) shows a warning before saving |
+| ☐ | Editing a cell by hand in `CC Payments` shows up in the app after refresh (FR-045) |
+| ☐ | Changing the USD rate moves every converted income figure with zero extra RPCs (FR-033) |
+| ☐ | Setting the rate to 0 shows "income unavailable", never a converted 0 (FR-017) |
+| ☐ | The worked example (B0 400, ADIB 1,000/25th, installment 1,000 + salary $2,250@48.50/27th) reports first shortfall the 25th, amount to prepare 1,600, closing balance +107,525 |
+| ☐ | A month whose obligations all fall after the salary date reports nothing to prepare |
+| ☐ | Forecast carries a negative closing balance into the next row |
+| ☐ | **SC-005 baseline comparison: every pre-existing installment/dashboard figure is unchanged after all the above** |
+
+---

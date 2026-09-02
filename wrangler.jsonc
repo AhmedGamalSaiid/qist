@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Local dev and CI only (research.md R10) — no route, custom domain, or
+  // cron config here. Production deployment is deferred to the feature that
+  // ships it.
+  "name": "incoming-sheet",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "incoming-sheet-local",
+      "database_id": "local",
+      "migrations_dir": "db/migrations",
+    },
+  ],
+}

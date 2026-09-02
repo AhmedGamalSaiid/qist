@@ -1,0 +1,160 @@
+/* ---------------------------------------------------------------------------
+   PUBLIC TOKEN API
+   ---------------------------------------------------------------------------
+   Everything above this file is the system's internal vocabulary: a raw ramp
+   (--ink-*, --orange-*, --teal-*) and a role layer (--bg-*, --text-*, --fs-*).
+   Component source consumes the role layer and nothing else.
+
+   This file is the third tier: a stable, fully-qualified public name for every
+   token a product implementation is expected to touch. It contains only
+   aliases — there is exactly one source of truth for every value, so these
+   cannot drift. Consume these names from application code, Tailwind config,
+   style-dictionary, iOS/Android exports or a Figma variable import; keep the
+   internal names for work inside this system.
+
+   Naming: --color-<role>-<variant> · --font-<axis>-<step> ·
+           --spacing-<step> · --radius-<step> · --motion-<role>.
+   --------------------------------------------------------------------------- */
+:root{
+  /* ---------- Colour: background & surface ---------- */
+  --color-background-primary:var(--bg-canvas);
+  --color-surface-primary:var(--bg-surface);
+  --color-surface-elevated:var(--bg-elevated);
+  --color-surface-input:var(--bg-input);
+  --color-surface-modal:var(--bg-modal);
+  --color-surface-nav:var(--bg-nav);
+  --color-surface-inverse:var(--bg-inverse);
+  --color-surface-mist:var(--bg-mist);
+
+  /* ---------- Colour: text ---------- */
+  --color-text-primary:var(--text-primary);
+  --color-text-secondary:var(--text-secondary);
+  --color-text-tertiary:var(--text-tertiary);
+  --color-text-disabled:var(--text-disabled);
+  --color-text-placeholder:var(--text-placeholder);
+  --color-text-inverse:var(--text-inverse);
+  --color-text-inverse-secondary:var(--text-inverse-secondary);
+  --color-text-accent:var(--text-accent);
+
+  /* ---------- Colour: accent & state ---------- */
+  --color-accent-primary:var(--accent);
+  --color-accent-hover:var(--accent-hover);
+  --color-accent-active:var(--accent-active);
+  --color-accent-on:var(--accent-on);
+  --color-state-positive:var(--positive);
+  --color-state-negative:var(--negative);
+  --color-state-warning:var(--warning);
+  --color-state-info:var(--info);
+
+  /* ---------- Colour: border ---------- */
+  --color-border-hairline:var(--border-hairline);
+  --color-border-subtle:var(--border-subtle);
+  --color-border-default:var(--border-default);
+  --color-border-active:var(--border-active);
+  --color-border-focus:var(--border-focus);
+
+  /* ---------- Typography ---------- */
+  --font-family-display:var(--font-display);
+  --font-family-body:var(--font-ui);
+  --font-family-numeric:var(--font-numeric);
+
+  --font-size-money-xl:var(--fs-money-xl);
+  --font-size-money-lg:var(--fs-money-lg);
+  --font-size-money-md:var(--fs-money-md);
+  --font-size-display-lg:var(--fs-display-lg);
+  --font-size-display:var(--fs-display);
+  --font-size-heading-lg:var(--fs-h1);
+  --font-size-heading-md:var(--fs-h2);
+  --font-size-heading-sm:var(--fs-h3);
+  --font-size-heading-xs:var(--fs-h4);
+  --font-size-body-lg:var(--fs-body-lg);
+  --font-size-body-md:var(--fs-body);
+  --font-size-body-sm:var(--fs-body-sm);
+  --font-size-label:var(--fs-label);
+  --font-size-caption:var(--fs-caption);
+  --font-size-numeric-lg:var(--fs-numeric-lg);
+  --font-size-numeric-md:var(--fs-numeric-md);
+  --font-size-numeric-sm:var(--fs-numeric-sm);
+
+  --font-weight-thin:var(--fw-thin);
+  --font-weight-light:var(--fw-light);
+  --font-weight-regular:var(--fw-regular);
+  --font-weight-medium:var(--fw-medium);
+
+  --line-height-tight:var(--lh-tight);
+  --line-height-snug:var(--lh-snug);
+  --line-height-normal:var(--lh-normal);
+  --line-height-relaxed:var(--lh-relaxed);
+
+  --letter-spacing-display:var(--ls-display);
+  --letter-spacing-heading:var(--ls-heading);
+  --letter-spacing-body:var(--ls-body);
+  --letter-spacing-label:var(--ls-label);
+  --letter-spacing-numeric:var(--ls-numeric);
+
+  /* The stepped monetary lockup. Changing either ratio changes the single most
+     recognisable element in the product — see the do-not-change list. */
+  --money-ratio-symbol:var(--money-symbol-scale);
+  --money-ratio-decimal:var(--money-decimal-scale);
+
+  /* ---------- Spacing ---------- */
+  --spacing-2xs:var(--space-4);
+  --spacing-xs:var(--space-8);
+  --spacing-sm:var(--space-12);
+  --spacing-md:var(--space-16);
+  --spacing-lg:var(--space-24);
+  --spacing-xl:var(--space-32);
+  --spacing-2xl:var(--space-48);
+  --spacing-3xl:var(--space-64);
+  --spacing-gutter-screen:var(--gutter-screen);
+  --spacing-gutter-section:var(--gutter-section);
+  --spacing-hit-min:var(--hit-min);
+
+  /* ---------- Radius, border, shadow ---------- */
+  --radius-none-public:var(--radius-none);
+  --radius-xs-public:var(--radius-xs);
+  --radius-sm-public:var(--radius-sm);
+  --radius-md-public:var(--radius-md);
+  --radius-lg-public:var(--radius-lg);
+  --radius-panel-public:var(--radius-panel);
+  --border-width-hairline:var(--bw-hairline);
+  --border-width-thick:var(--bw-thick);
+  --shadow-panel-public:var(--shadow-panel);
+  --shadow-sheet-public:var(--shadow-sheet);
+
+  /* ---------- Icon & token-mark sizing ---------- */
+  --icon-size-xs:var(--icon-xs);
+  --icon-size-sm:var(--icon-sm);
+  --icon-size-md:var(--icon-md);
+  --icon-size-lg:var(--icon-lg);
+  --icon-size-xl:var(--icon-xl);
+  --token-mark-xs:var(--token-icon-xs);
+  --token-mark-sm:var(--token-icon-sm);
+  --token-mark-md:var(--token-icon-md);
+  --token-mark-lg:var(--token-icon-lg);
+  --token-mark-xl:var(--token-icon-xl);
+
+  /* ---------- Motion ---------- */
+  --motion-instant:var(--dur-instant);
+  --motion-fast:var(--dur-fast);
+  --motion-standard:var(--dur-normal);
+  --motion-slow:var(--dur-slow);
+  --motion-atmosphere:var(--dur-atmosphere);
+  --motion-ease-standard:var(--ease-standard);
+  --motion-ease-emphasized:var(--ease-emphasized);
+  --motion-ease-decelerate:var(--ease-decelerate);
+  --motion-ease-accelerate:var(--ease-accelerate);
+  --motion-transform-press:var(--motion-press);
+  --motion-transform-lift:var(--motion-lift);
+
+  /* ---------- Gradients ---------- */
+  --gradient-brand-hero:var(--gradient-hero);
+  --gradient-brand-header:var(--gradient-header);
+  --gradient-brand-keypad:var(--gradient-keypad-glow);
+
+  /* ---------- Breakpoints (declarative; media queries need literals) ---------- */
+  --breakpoint-sm:var(--bp-sm);
+  --breakpoint-md:var(--bp-md);
+  --breakpoint-lg:var(--bp-lg);
+  --breakpoint-xl:var(--bp-xl);
+}

@@ -122,6 +122,38 @@ var WRITE_ALLOWLIST = Object.freeze({
     allows: function (p) {
       return p.c1 === 'A' && p.c2 === 'G' && p.row === firstEmptySnapshotRow_();
     }
+  }),
+  addCcPayment: Object.freeze({
+    sheet: 'CC Payments',
+    // Row bound mirrors addTransaction: the exact first blank row is
+    // resolved under lock by the RPC, which fills column A.
+    allows: function (p) {
+      return p.c1 === 'A' && p.c2 === 'F' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  setCcPaymentStatus: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'E' && p.c2 === 'E' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  updateCcPayment: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'A' && p.c2 === 'F' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  deleteCcPayment: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'A' && p.c2 === 'F' && p.row >= 2 && p.row <= 500;
+    }
+  }),
+  setSalary: Object.freeze({
+    sheet: 'CC Payments',
+    allows: function (p) {
+      return p.c1 === 'I' && p.c2 === 'I' && p.row >= 2 && p.row <= 4;
+    }
   })
 });
 
@@ -245,6 +277,8 @@ function getState() {
     netWorth: readNetWorth_(ss),
     transactions: readTransactions_(ss),
     history: readHistory_(ss),
+    creditCards: readCreditCards_(ss),
+    income: readIncome_(ss),
     meta: {
       fetchedAt: new Date().toISOString(),
       sheetUrl: ss.getUrl()
@@ -292,7 +326,9 @@ function readDashboard_(ss) {
     nextInstallment: nextRow ? { date: toIso_(nextRow[1]), amount: toNumber_(nextRow[2]) } : { date: null, amount: 0 },
     dueNext12Months: num_(byLabel, /due next 12/i),
     overdueCount: num_(byLabel, /overdue/i),
-    usdRate: num_(byLabel, /usd\/?egp|usd rate/i),
+    // Dashboard!A12 reads "USD / EGP rate" with spaces around the slash, so the
+    // separator has to tolerate whitespace or this silently reports 0.
+    usdRate: num_(byLabel, /usd\s*\/?\s*egp|usd\s+rate/i),
     assetMix: assetMix,
     unpaidByYear: unpaidByYear
   };
@@ -709,20 +745,20 @@ function setPropertyPaid(row, value) {
 
 /**
  * T034 — copies the History live row's current values as static values into
- * the first empty row after the "SNAPSHOTS ↓" marker. Reuses the existing
- * addSnapshot() global from Code.gs when present (research R10); otherwise
- * mirrors its behavior here without editing Code.gs.
+ * the first empty row after the "SNAPSHOTS ↓" marker.
+ *
+ * Deliberately does NOT delegate to Code.gs's addSnapshot(). That global writes
+ * with appendRow(), which bypasses guardedWrite()/WRITE_ALLOWLIST, ignores the
+ * "SNAPSHOTS ↓" marker, and records recomputed Net Worth sums rather than a copy
+ * of the live row — so whether Code.gs happened to be present would silently
+ * change both the destination and the meaning of a snapshot.
  */
 function takeSnapshot() {
   return withLock_(function () {
-    if (typeof addSnapshot === 'function') {
-      addSnapshot();
-    } else {
-      var sh = sheet_('History');
-      var liveRow = sh.getRange('A2:G2').getValues()[0];
-      var targetRow = firstEmptySnapshotRow_();
-      guardedWrite('takeSnapshot', 'History', 'A' + targetRow + ':G' + targetRow, [liveRow]);
-    }
+    var sh = sheet_('History');
+    var liveRow = sh.getRange('A2:G2').getValues()[0];
+    var targetRow = firstEmptySnapshotRow_();
+    guardedWrite('takeSnapshot', 'History', 'A' + targetRow + ':G' + targetRow, [liveRow]);
     return { history: readHistory_(SpreadsheetApp.getActive()) };
   });
 }

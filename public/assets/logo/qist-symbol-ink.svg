@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <title>Qist symbol, dark ink</title>
+  <desc>Qist symbol, master drawing. 120 artboard, optical shift -3 in x, stroke 6, corner radius 26, segment gaps 8, lower-right arc ends (97.91, 90), tail ends x=114. Use at 32px and above. Final vector artwork: do not edit, recolour outside the two inks, or mirror.</desc>
+  <g transform="translate(-3,0)" fill="none" stroke-width="6" stroke-linecap="butt">
+        <path d="M44 18 L76 18 A26 26 0 0 1 100.78 36.13" stroke="#ff7a33"></path>
+        <path d="M102 44 L102 76 A26 26 0 0 1 97.91 90" stroke="#1f1f1f"></path>
+        <path d="M114 102 L44 102 A26 26 0 0 1 19.22 83.87" stroke="#1f1f1f"></path>
+        <path d="M18 76 L18 44 A26 26 0 0 1 36.13 19.22" stroke="#1f1f1f"></path>
+  </g>
+</svg>

@@ -1,0 +1,55 @@
+:root{
+  /* ---------- Line-icon box sizes ----------
+     The reference draws a single thin geometric set. These are the boxes it
+     appears in; stroke is constant across all of them. */
+  --icon-xs:12px; /* @kind spacing */
+  --icon-sm:14px; /* @kind spacing */
+  --icon-md:16px; /* @kind spacing */
+  --icon-lg:20px; /* @kind spacing */
+  --icon-xl:24px; /* @kind spacing */
+  --icon-stroke:1.5; /* @kind other */
+  --icon-stroke-heavy:2.2; /* @kind other */   /* delta arrow only */
+
+  /* ---------- Control geometry ---------- */
+  --control-h-xs:36px; /* @kind spacing */   /* icon buttons on the balance card */
+  --control-h-sm:32px; /* @kind spacing */
+  --control-h-md:40px; /* @kind spacing */
+  --control-h-lg:48px; /* @kind spacing */
+  --control-px-sm:12px; /* @kind spacing */
+  --control-px-md:16px; /* @kind spacing */
+  --control-px-lg:20px; /* @kind spacing */
+  --control-gap:8px; /* @kind spacing */
+  --loader-bw:1.5px; /* @kind spacing */
+  --spinner-md:18px; /* @kind spacing */
+
+  /* ---------- Element geometry measured off the reference ---------- */
+  --chip-h-sm:34px; /* @kind spacing */    /* swap token chip */
+  --chip-h-md:36px; /* @kind spacing */    /* network chip in the token sheet */
+  --chip-inset:6px; /* @kind spacing */    /* leading pad, hugs the mark */
+  --chip-px-sm:10px; /* @kind spacing */
+  --chip-px-md:12px; /* @kind spacing */
+  --key-h:52px; /* @kind spacing */        /* keypad key */
+  --pct-h:48px; /* @kind spacing */        /* 25/50/75/Max */
+  --pct-gap:4px; /* @kind spacing */
+  --tile-h:76px; /* @kind spacing */       /* Send / Swap / Buy-Sell */
+  --nav-h:64px; /* @kind spacing */
+  --nav-item:44px; /* @kind spacing */
+  --nav-action:64px; /* @kind spacing */
+  --header-h:118px; /* @kind spacing */
+  --search-h:56px; /* @kind spacing */
+  --search-gap:14px; /* @kind spacing */
+  --field-caret-h:38px; /* @kind spacing */
+  --swap-arrow:24px; /* @kind spacing */
+  --avatar-md:40px; /* @kind spacing */
+  --card-min-h:340px; /* @kind spacing */
+
+  /* ---------- Containers ---------- */
+  --panel-w:390px; /* @kind spacing */
+  --panel-h:720px; /* @kind spacing */
+  --panel-w-max:440px; /* @kind spacing */  /* the measure the panel holds above --bp-md */
+  --sheet-h-sm:62%; /* @kind other */
+  --sheet-h-md:72%; /* @kind other */
+  --sheet-h-lg:78%; /* @kind other */
+  --w-toast:360px; /* @kind spacing */
+  --measure-list:32ch; /* @kind other */    /* list description wrap limit */
+}

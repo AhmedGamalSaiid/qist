@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <base target="_top">
   <?!= include('styles') ?>
 </head>
@@ -15,14 +16,19 @@
 
       <!-- Home ----------------------------------------------------------->
       <section class="screen" id="screen-home" data-screen="home">
+        <div class="card" id="homePlanCard"></div>
         <div class="kpi-grid" id="homeKpiGrid"></div>
         <div class="card chart-card">
           <h2 data-t="assetMix">Asset Mix</h2>
-          <canvas id="chartAssetMix" height="220"></canvas>
+          <div class="chart-frame chart-frame--dial">
+            <canvas id="chartAssetMix"></canvas>
+          </div>
         </div>
         <div class="card chart-card">
           <h2 data-t="unpaidByYear">Unpaid Installments by Year</h2>
-          <canvas id="chartUnpaidByYear" height="220"></canvas>
+          <div class="chart-frame chart-frame--series">
+            <canvas id="chartUnpaidByYear"></canvas>
+          </div>
         </div>
       </section>
 
@@ -78,6 +84,55 @@
       <section class="screen" id="screen-installments" data-screen="installments">
         <div class="card" id="installmentsSummary"></div>
         <div id="installmentGroups"></div>
+      </section>
+
+      <!-- Credit Cards --------------------------------------------------------->
+      <section class="screen" id="screen-cards" data-screen="cards">
+        <div class="card empty-state" id="cardsSetupNeeded"></div>
+        <form class="card form" id="addCcPaymentForm">
+          <div class="chip-grid" id="ccCardChips"></div>
+          <div class="field-row">
+            <label class="field grow">
+              <span data-t="amount">Amount</span>
+              <input type="text" inputmode="decimal" id="ccAmountInput" class="editable" required>
+            </label>
+          </div>
+          <label class="field">
+            <span data-t="dueDate">Due Date</span>
+            <input type="date" id="ccDueDateInput" class="editable" required>
+          </label>
+          <label class="field">
+            <span data-t="statementMonthOptional">Statement Month (optional)</span>
+            <input type="text" id="ccStatementMonthInput" class="editable" placeholder="mm/yyyy">
+          </label>
+          <label class="field">
+            <span data-t="noteOptional">Note (optional)</span>
+            <input type="text" id="ccNoteInput" class="editable" maxlength="500">
+          </label>
+          <button type="submit" class="btn-primary" data-t="addCardPayment">Add Card Payment</button>
+        </form>
+        <div id="cardGroups"></div>
+      </section>
+
+      <!-- Plan ------------------------------------------------------------------>
+      <section class="screen" id="screen-plan" data-screen="plan">
+        <div class="card empty-state" id="planSetupNeeded"></div>
+        <div class="card" id="planMonthNav"></div>
+        <div class="card" id="planVerdict"></div>
+        <div id="planTimeline"></div>
+        <button type="button" class="btn-primary full" id="planAddCcBtn" data-t="addCardPayment">Add Card Payment</button>
+      </section>
+
+      <!-- Forecast ---------------------------------------------------------------->
+      <section class="screen" id="screen-forecast" data-screen="forecast">
+        <div class="card empty-state" id="forecastSetupNeeded"></div>
+        <div class="card">
+          <h2 data-t="forecastTitle">12-Month Forecast</h2>
+          <div class="table-scroll">
+            <table class="table" id="forecastTable"></table>
+          </div>
+          <p class="hint" id="forecastBeyondHorizon"></p>
+        </div>
       </section>
 
       <!-- Accounts ----------------------------------------------------------->
@@ -155,7 +210,9 @@
       <section class="screen" id="screen-history" data-screen="history">
         <div class="card chart-card">
           <h2 data-t="netWorthOverTime">Net Worth Over Time</h2>
-          <canvas id="chartHistory" height="220"></canvas>
+          <div class="chart-frame chart-frame--series">
+            <canvas id="chartHistory"></canvas>
+          </div>
         </div>
         <div class="card">
           <div class="card-header-row">
@@ -238,6 +295,9 @@
       <button type="button" class="nav-btn" data-nav="installments">
         <span class="nav-icon">📅</span><span data-t="navInstallments">Installments</span>
       </button>
+      <button type="button" class="nav-btn" data-nav="plan">
+        <span class="nav-icon">📊</span><span data-t="navPlan">Plan</span>
+      </button>
       <button type="button" class="nav-btn" data-nav="more">
         <span class="nav-icon">☰</span><span data-t="navMore">More</span>
       </button>
@@ -260,6 +320,7 @@
           integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <?!= include('i18n-js') ?>
+  <?!= include('plan-js') ?>
   <?!= include('app-js') ?>
 </body>
 </html>

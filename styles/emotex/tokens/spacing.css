@@ -1,0 +1,43 @@
+:root{
+  --space-0:0px;
+  --space-2:2px;
+  --space-4:4px;
+  --space-6:6px;
+  --space-8:8px;
+  --space-10:10px;
+  --space-12:12px;
+  --space-14:14px;
+  --space-16:16px;
+  --space-18:18px;
+  --space-20:20px;
+  --space-24:24px;
+  --space-32:32px;
+  --space-40:40px;
+  --space-48:48px;
+  --space-64:64px;
+  --space-80:80px;
+  --space-96:96px;
+
+  /* rhythm constants measured off the reference screens */
+  --gutter-screen:20px;      /* left/right padding inside a mobile panel */
+  --gutter-section:24px;     /* vertical padding between stacked sections */
+  --gap-keypad:0px;          /* keypad keys share edges, no gap */
+  --gap-tile:8px;            /* action tiles */
+  --gap-list:20px;           /* list row vertical rhythm */
+  --hit-min:44px;            /* minimum touch target */
+
+  /* token mark sizes — the reference keeps these restrained, never badge-sized.
+     Values are the ones actually measured in the source, so every component
+     resolves to a step on this scale rather than a loose number. */
+  --token-icon-xs:16px;   /* inline within a text row */
+  --token-icon-sm:22px;   /* chips, network pills */
+  --token-icon-md:28px;   /* dense rows */
+  --token-icon-lg:34px;   /* token sheet rows, swap token squares */
+  --token-icon-xl:40px;   /* selector, headline pairing */
+
+  /* breakpoints */
+  --bp-sm:390px; /* @kind other */
+  --bp-md:768px; /* @kind other */
+  --bp-lg:1120px; /* @kind other */
+  --bp-xl:1440px; /* @kind other */
+}

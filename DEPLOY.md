@@ -80,6 +80,16 @@ instead of creating a new one:
 Creating a *New deployment* instead would give you a second, different URL —
 avoid that unless you want a separate test copy.
 
+> **Never bump a web app deployment with `clasp redeploy` / `clasp
+> update-deployment`.** It updates the version number but strips the web app
+> entry point, and the `/exec` URL then serves Google Drive's
+> *"Sorry, unable to open the file at this time."* The Manage deployments
+> dialog still shows a Web app URL afterwards, so the deployment looks healthy
+> — only opening the URL reveals it. Recover by opening **Manage deployments →
+> pencil → Deploy** once; that re-registers the entry point on the same URL.
+> `clasp push` and `clasp create-version` are safe; only the redeploy step has
+> to happen in the editor.
+
 ---
 
 ## 4. Add to Home Screen
@@ -124,6 +134,8 @@ unreachable before you start trusting the write buttons.
 | Symptom | Cause | Fix |
 |---|---|---|
 | Blank page at `/exec` | Deployment not updated after a push | Manage deployments → edit → New version |
+| `/exec` **and** `/dev` both show Drive's "Sorry, unable to open the file at this time." | The web app entry point was stripped, almost always by `clasp redeploy` | Manage deployments → pencil → **Deploy** (re-registers the entry point, same URL). Never redeploy a web app from the CLI |
+| `USD/EGP Rate` shows `0` while the sheet shows a rate | `readDashboard_` matched the label with a regex that disallowed spaces around the slash | Fixed — the pattern now tolerates `USD / EGP rate` |
 | "Script function not found: doGet" | `api.gs` was not pushed | `clasp push`, check the file list |
 | Charts missing, everything else fine | Chart.js blocked (offline, or CDN unreachable) | Check the connection; the SRI hash in `index.html` must match cdnjs Chart.js 4.4.1 |
 | "Can't reach your sheet." screen | Cold load failed with no cache | Tap Retry; check connectivity and that the deployment is still active |

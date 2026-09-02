@@ -1,0 +1,13 @@
+/* Emotex type stack.
+   Display / technical face: Oxanium — closest freely-licensed match to the squared,
+   Eurostile-descended face in the reference video (flat-sided stems, rounded-rectangle
+   counters, flat-topped 2/3/5, rounded-rectangle 0). Used at 200/300 only.
+   UI / body face: Poppins — geometric grotesque with single-storey 'a' and large
+   x-height, matching the reference's label and list typography. */
+@import url("https://fonts.googleapis.com/css2?family=Oxanium:wght@200;300;400;500&family=Poppins:wght@300;400;500&display=swap");
+
+:root{
+  --font-display:"Oxanium","Eurostile","Square721",system-ui,sans-serif;
+  --font-ui:"Poppins","Futura",system-ui,sans-serif;
+  --font-numeric:"Oxanium","Eurostile",system-ui,sans-serif;
+}
