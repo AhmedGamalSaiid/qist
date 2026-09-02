@@ -9,11 +9,27 @@
    The three token NAMES below are Emotex's, unchanged and in the same order —
    only the family source moves, from a CDN request to a self-hosted next/font
    face declared in app/layout.tsx. Components consume --font-display /
-   --font-ui / --font-numeric exactly as they do in the design system.
-
-   --font-mono is NOT Emotex's. See styles/qist.css. */
+   --font-ui / --font-numeric exactly as they do in the design system. */
 :root{
   --font-display:var(--font-oxanium),"Eurostile","Square721",system-ui,sans-serif;
   --font-ui:var(--font-poppins),"Futura",system-ui,sans-serif;
   --font-numeric:var(--font-oxanium),"Eurostile",system-ui,sans-serif;
+}
+
+/* ---------- Deliberate phase addition: --font-mono (Sign in, §2.2) ----------
+   Emotex ships no monospace face; --font-display (Oxanium) and --font-ui
+   (Poppins) are both proportional, and Oxanium at weight 200–300 and body size
+   does not reliably disambiguate `_`, `I` vs `l`, or `0` vs `O`. CodeToken
+   renders OWNER_EMAIL for an administrator who has to retype it into a
+   configuration file correctly on the first attempt, so this is the one token
+   the sign-in phase adds.
+
+   SUBSTITUTION, flagged exactly like Oxanium and Poppins above: JetBrains Mono
+   was chosen for its squared construction, the closest open monospace match to
+   Oxanium's geometry. If the real face arrives, this becomes exact. Weights 300
+   and 400; CodeToken sets 400 (a hairline monospace at 13px defeats the
+   disambiguation the token exists for). Self-hosted via next/font in
+   app/layout.tsx, like the three faces above. */
+:root{
+  --font-mono:var(--font-jetbrains-mono),"JetBrains Mono","SFMono-Regular",Menlo,monospace;
 }

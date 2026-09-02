@@ -42,6 +42,9 @@ component.**
    request on every page load is a performance and privacy cost `next/font`
    exists to remove. The three token *names* are unchanged — only the source of
    the families moves, to self-hosted faces declared in `app/layout.tsx`.
+   It also carries `--font-mono`, the one token the sign-in phase adds, logged
+   there as a deliberate addition and flagged as a substitution (JetBrains Mono)
+   alongside Oxanium and Poppins — per the sign-in handoff §2.2 / §9.6.
 
 2. **`Sheet` uses `useId()` instead of a module-level counter.** The source
    generates its `aria-labelledby` id from `let seq = 0`, which desynchronises
@@ -99,7 +102,22 @@ Seven wallet-specific components (`TokenChip`, `TokenRow`, `TokenIcon`,
 `Keypad`, `PercentRow`, `SwapDivider`, `AmountField`) and `BalanceCard`, which
 composes two of them. Nothing in Qist consumes them.
 
-Also absent: the four components the sign-in screen introduced —
-`StatusNotice`, `CodeToken`, `BrandLockup`, `GoogleSignInButton`. They are
-specified in that screen's implementation handoff and belong with the sign-in
-work, not with this import.
+## Sign-in phase additions
+
+Three **proposed Emotex additions**, approved for the sign-in phase and built
+in the design-system layer because Home consumes all three (sign-in handoff §2):
+
+| Component | What it is |
+|---|---|
+| `components/ui/StatusNotice.tsx` | In-flow page-state message, tones `neutral` / `blocked`. Not `Toast`. |
+| `components/ui/CodeToken.tsx` | Inline copyable literal in `--font-mono`, LTR-isolated. |
+| `components/ui/BrandLockup.tsx` | The Qist mark with the frozen logo rules enforced structurally — 32px floor, polarity, script, and three RTL-flip guards (`<img>`, pinned `dir`/`transform`, `data-brand-mark="qist"`). |
+
+Plus one **vendor-locked** control that is deliberately *not* Emotex and lives
+outside this barrel: `components/google/GoogleSignInButton.tsx`, built to
+Google's "Sign in with Google" branding guidelines (raw literals sanctioned by
+path in `styles/qist.css`). Its mark is Google's own asset at
+`public/assets/google/g-mark.png`.
+
+Alexandria (the Arabic UI face) remains **PENDING APPROVAL**: loaded by the
+sign-in route only, applied at that screen's root, and not in `fonts.css`.

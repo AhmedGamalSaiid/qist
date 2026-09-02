@@ -1,3 +1,4 @@
+import { APIError } from 'better-auth/api'
 import type { AppClient } from '../../db/client'
 import { claimMigratedHousehold, findUnclaimedMigratedHouseholdId, provisionHousehold } from '../data/provisioning'
 import { OwnerUnconfiguredError } from '../errors'
@@ -17,6 +18,41 @@ export async function assertSignInAllowed(client: AppClient, ownerEmail: string 
   if (ownerEmail !== null) return
   if ((await findUnclaimedMigratedHouseholdId(client)) !== null) {
     throw new OwnerUnconfiguredError()
+  }
+}
+
+/**
+ * The one error code the sign-in screen is allowed to recognise.
+ *
+ * Better Auth's OAuth callback rethrows an `APIError` from the user-create
+ * hook and redirects to the client's `errorCallbackURL` as
+ * `?error=<code>&error_description=<message>`; a plain `Error` is swallowed
+ * into the generic `unable_to_create_user`, which a database fault could
+ * also produce. The fail-closed refusal (A4) is the only state whose reader
+ * is the administrator and the only one that names a cause, so it — and
+ * only it — travels under a dedicated code. Every other value the callback
+ * can carry renders as A3, which by design says nothing about why
+ * (spec FR-004, Sign in handoff §1.4).
+ */
+export const OWNER_UNCONFIGURED_CODE = 'OWNER_UNCONFIGURED'
+
+/**
+ * `assertSignInAllowed`, translated for Better Auth's hook boundary: the
+ * foundation's typed `OwnerUnconfiguredError` becomes the `APIError` Better
+ * Auth propagates to the browser under `OWNER_UNCONFIGURED_CODE`. Nothing
+ * else is translated — any other failure stays whatever it was.
+ */
+export async function refuseIfSignInClosed(client: AppClient, ownerEmail: string | null): Promise<void> {
+  try {
+    await assertSignInAllowed(client, ownerEmail)
+  } catch (error) {
+    if (error instanceof OwnerUnconfiguredError) {
+      throw new APIError('FORBIDDEN', {
+        code: OWNER_UNCONFIGURED_CODE,
+        message: 'Sign-in is closed until OWNER_EMAIL is set.',
+      })
+    }
+    throw error
   }
 }
 

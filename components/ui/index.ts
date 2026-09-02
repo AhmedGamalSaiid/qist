@@ -16,3 +16,18 @@ export { Sheet, type SheetProps } from "./Sheet";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { Spinner, type SpinnerProps } from "./Spinner";
 export { Toast, type ToastProps } from "./Toast";
+
+/* Proposed Emotex additions, approved for the sign-in phase (Sign in handoff
+   §2). General components, not Sign-in special cases — Home consumes all
+   three — so they live in the design-system layer, not in the route. */
+export {
+  BrandLockup,
+  resolveBrandMark,
+  BRAND_SYMBOL_FLOOR,
+  type BrandLockupProps,
+  type BrandPolarity,
+  type BrandScript,
+  type ResolvedBrandMark,
+} from "./BrandLockup";
+export { CodeToken, CODE_TOKEN_CONFIRM_MS, type CodeTokenProps } from "./CodeToken";
+export { StatusNotice, type StatusNoticeProps } from "./StatusNotice";

@@ -2,7 +2,7 @@ import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { betterAuth } from 'better-auth'
 import type { AppClient } from '../../db/client'
 import { authAccounts, authSessions, authVerifications, users } from '../../db/schema/index'
-import { assertSignInAllowed, onFirstSignIn } from './on-first-sign-in'
+import { onFirstSignIn, refuseIfSignInClosed } from './on-first-sign-in'
 import { newId, now } from '../runtime/index'
 
 /**
@@ -84,10 +84,13 @@ export function createAuth(client: AppClient, env: AppEnv) {
            * Runs before every new user is persisted (T028, research.md R4):
            * refuses the sign-in outright — nothing written, not even the
            * user row — while an unclaimed migrated household exists and no
-           * owner is configured. Inert otherwise.
+           * owner is configured. Inert otherwise. The refusal travels to the
+           * sign-in screen as the `OWNER_UNCONFIGURED` error code, which is
+           * what lets the screen show the operator-facing A4 state instead
+           * of the causeless A3.
            */
           before: async () => {
-            await assertSignInAllowed(client, env.OWNER_EMAIL)
+            await refuseIfSignInClosed(client, env.OWNER_EMAIL)
           },
           /**
            * Fires after Better Auth persists the new `users` row (T020,

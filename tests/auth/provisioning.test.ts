@@ -1,7 +1,8 @@
 import { and, eq } from 'drizzle-orm'
 import { afterEach, describe, expect, it } from 'vitest'
 import { auditLog, households, memberships, users } from '../../db/schema/index'
-import { assertSignInAllowed, onFirstSignIn } from '../../lib/auth/on-first-sign-in'
+import { APIError } from 'better-auth/api'
+import { OWNER_UNCONFIGURED_CODE, assertSignInAllowed, onFirstSignIn, refuseIfSignInClosed } from '../../lib/auth/on-first-sign-in'
 import { atomically } from '../../lib/data/atomically'
 import { provisionHousehold } from '../../lib/data/index'
 import { OwnerUnconfiguredError, ProvisioningConflictError } from '../../lib/errors'
@@ -206,6 +207,24 @@ describe('assertSignInAllowed (US2 fail-closed guard)', () => {
     // itself writes nothing.
     expect(await client.db.select().from(users)).toHaveLength(1)
     expect(await client.db.select().from(households)).toHaveLength(1)
+  })
+
+  it('crosses the Better Auth hook boundary as an APIError under the dedicated code', async () => {
+    database = await createTestDatabase()
+    const client = database.client
+
+    await seedUnclaimedMigratedHousehold(client, 'HGUARD00000000000000000AB')
+
+    const failure = await refuseIfSignInClosed(client, null).then(
+      () => null,
+      (error: unknown) => error,
+    )
+    expect(failure).toBeInstanceOf(APIError)
+    expect((failure as APIError).body?.code).toBe(OWNER_UNCONFIGURED_CODE)
+    expect((failure as APIError).status).toBe('FORBIDDEN')
+
+    // Inert when an owner is configured — nothing to translate.
+    await expect(refuseIfSignInClosed(client, 'owner@example.com')).resolves.toBeUndefined()
   })
 
   it('is inert when OWNER_EMAIL is configured, even with an unclaimed migrated household', async () => {

@@ -24,10 +24,12 @@ const poppins = Poppins({
   display: "swap",
 });
 
-/* Qist's addition, not Emotex's: CodeToken renders OWNER_EMAIL for the reader
-   to copy exactly. See styles/qist.css. */
+/* Qist's one phase addition to the type stack: --font-mono, for CodeToken,
+   which renders OWNER_EMAIL for the reader to copy exactly. Weights 300 and
+   400 per the sign-in handoff; logged in styles/fonts.css as a substitution. */
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
+  weight: ["300", "400"],
   variable: "--font-jetbrains-mono",
   display: "swap",
 });

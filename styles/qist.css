@@ -15,13 +15,53 @@
 :root{
   /* ---------- Shipped: introduced by the sign-in screen ---------- */
 
-  /* Monospace face. Not an Emotex token — Emotex is a two-face system and has
-     no monospace need. Qist does: CodeToken renders OWNER_EMAIL, an environment
-     variable the reader is expected to copy exactly, and a proportional face
-     makes character-level transcription errors invisible.
-     Self-hosted via next/font (app/layout.tsx), matching styles/fonts.css. */
-  --font-mono:var(--font-jetbrains-mono),"SFMono-Regular",Menlo,monospace;
+  /* --font-mono lives in styles/fonts.css, beside Emotex's three faces, logged
+     there as a deliberate phase addition with the retyping rationale and
+     flagged as a substitution alongside Oxanium and Poppins (Sign in §2.2, §9.6). */
+
+  /* The A1 corner glow is atmosphere, not a mark, so it mirrors with the
+     layout: Emotex's --gradient-corner-glow is anchored top-right (`at 100% 0%`)
+     for LTR, and the RTL panel needs the same stops anchored top-left. Same
+     accent-glow stop and the same transparent orange stop as the Emotex token —
+     only the anchor moves (Sign in §1.2, decision 4). */
+  --gradient-corner-glow-rtl:radial-gradient(60% 60% at 0% 0%, var(--accent-glow) 0%, rgba(255,122,51,0) 70%);
 }
+
+/* ============================================================================
+   APP-LEVEL RESET
+
+   Emotex's base.css styles .emx-root and its descendants; it never touches the
+   document body because the design tool supplies that. The application does
+   not: the sign-in board's own helmet zeroes the body margin so a panel sits
+   flush at 390px, and the app needs the same. This is the only document-level
+   rule Qist adds.
+   ========================================================================= */
+body{margin:0}
+
+/* ============================================================================
+   LAYOUT PATTERN — an entering state does not reposition what was already there
+
+   Written into the sign-in handoff §1.1 after A2, A3 and A5 were found to move
+   the mark by 23px and 47px: a notice's height is absorbed by flexible space,
+   never by a region that positions something else. It binds on Home, so it is
+   two classes here rather than a sign-in fix.
+
+   .qist-anchored      A full-width layer taken OUT OF FLOW and pinned to a
+                       fraction of the panel height (--anchor-y), with its
+                       centre on that line. line-height:0 kills the descender
+                       leading an inline-flex child would otherwise add. What
+                       sits on it is positioned by the panel alone; nothing that
+                       enters below can move it. On Sign in the mark's layer is
+                       at 45.5%, A1's own centre, in A1/A2/A3/A5.
+   .qist-holds-bottom  The region that owns the bottom edge: margin-top:auto
+                       takes all the surplus, so a notice appearing inside it
+                       eats that surplus instead of pushing anything.
+   The host panel must be the positioning context (position:relative — Emotex's
+   .emx-panel already is). A4 is the stated exception: its mark is top-anchored
+   in flow and was already invariant.
+   ========================================================================= */
+.qist-anchored{position:absolute;inset-inline:0;top:var(--anchor-y,50%);transform:translateY(-50%);display:flex;justify-content:center;line-height:0}
+.qist-holds-bottom{margin-top:auto}
 
 /* ============================================================================
    PENDING APPROVAL — not system tokens yet
