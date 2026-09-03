@@ -215,7 +215,7 @@ Requirements are grouped by concern. Tags in brackets name the contract decision
 
 ### F. Numerals, direction, money
 
-- **FR-028** [R9, A28]: One client-side helper is the only place formatting happens: minor units → display string. EGP: two decimals, comma thousands, dot decimal, leading minus U+2212 (never a hyphen), `EGP` trailing, one isolated LTR run in both languages — only its position mirrors. USD native amounts follow the same rule with `USD` trailing. Grams: `g` trailing, decimals parameterised pending design. Rate values are not required on Home in 005 (the age is); the helper MUST support them as bare numbers with a unit expression, decimals parameterised pending design. Nothing arrives formatted from the server. The ported `AmountDisplay` is retired.
+- **FR-028** [R9, A28]: One client-side helper is the only place formatting happens: minor units → display string. EGP: two decimals, comma thousands, dot decimal, leading minus U+2212 (never a hyphen), `EGP` trailing, one isolated LTR run in both languages — only its position mirrors. USD native amounts follow the same rule with `USD` trailing: `2,444.00 USD`. The number–unit joiner is **U+202F narrow no-break space** in every case. Grams display **three decimals** from milligram storage, `g` trailing: `22.500 g`, `750.000 g`. Rate values are not required on Home in 005 (the age is); the helper MUST support them as bare numbers with a unit expression at **four places** if ever shown. (Decimals settled at the Stage 1 design review, 2026-09-03.) Nothing arrives formatted from the server. The ported `AmountDisplay` is retired.
 - **FR-029** [R9]: `today` for every due, overdue, and rate-age computation is the payload's Cairo `today`, never the device clock. Home states that date once (placement is design) [A9].
 - **FR-030** [Brief §5]: Latin digits in both languages, always. Dates `mm/dd/yyyy`. Digits, amounts and dates are direction-isolated LTR inside Arabic; Arabic runs are isolated inside English. Household data (account, card, liability, plan names) is never translated and appears exactly as entered. Columns of figures align down the column. `−7,824,830.81 EGP` holds on a phone in both directions without truncation or wrapping into nonsense.
 
@@ -249,6 +249,7 @@ Requirements are grouped by concern. Tags in brackets name the contract decision
 ### K. Ported components
 
 - **FR-046** [R15]: Bottom navigation is link-based and tested under RTL. Any ported component with physical-side properties (`margin-right`, `left:`, `text-align: left`, …) is converted to logical properties before use. No component or token outside the constitution's VII.2 allowlist is introduced until its handoff spec lands in `design/handoff/`.
+- **FR-047** [Stage 1 review, A9]: Design proposes a change to the ported `PanelHeader` (`components/ui/PanelHeader.tsx`, imported at `13e8a3f`, not an external dependency): an optional leading slot for the mark and an optional title. This is a **modification to a ported component** and is gated exactly as any design-system addition — nothing is implemented before its handoff spec lands in `design/handoff/`.
 
 ### L. Exclusions (hard stop — not future work, not placeholders, not disabled behaviour)
 
@@ -299,7 +300,7 @@ Everything in Brief §2's "not in plan" list: logging a transaction, marking an 
 | Arabic labels for the two net-worth figures | Design proposes, product owner approves | Home handoff |
 | Arabic labels for "Not recorded" and "Cannot be computed" | Design proposes, product owner approves | Home handoff |
 | Arabic labels for the five asset-mix rows | Design proposes, product owner approves | Home handoff |
-| Decimals for grams and for rate values | Design | Home handoff (helper stays parameterised until then) |
+| Design's A9 change to `PanelHeader` (leading mark slot, optional title) | Design proposes; handoff spec in `design/handoff/` | Before implementation (FR-047) |
 | Whether the "dated" (1–7 day) rate state survives as a distinct treatment | Design, at Stage 1 | Home handoff; FR-031's thresholds stand either way |
 | Home rollup meta line ("from 08/2026" → "to 09/2026" under P5) | Product owner informs design; design updates | Home handoff |
 | Wording for "no upcoming installment" | Design (requested at Stage 1) | Home handoff |

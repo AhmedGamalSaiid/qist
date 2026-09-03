@@ -133,7 +133,8 @@ member, or viewer), the household's timezone (Cairo), and today's date.
 
 - **Two net-worth figures, never one.** One excludes all future property
   installments; the other charges every one of them against today's assets. They
-  are −7.8 million EGP apart in the real household. **Neither may be labelled
+  are 8,214,605.20 EGP apart in the real household — the second one is
+  −7,824,830.81 EGP. **Neither may be labelled
   "net worth" unqualified**, and any figure that omits committed future
   obligations must say so where it is shown. This is settled: the old
   spreadsheet's single unqualified number caused a real misreading of this
@@ -179,8 +180,10 @@ live one counts.
 Design for a section that is genuinely empty, not a populated feed.
 
 **Rates** — 3: US dollar, gold per gram, silver per gram. Each carries an "as of"
-date. Today they are **10 days old, and therefore stale** — the threshold is 7
-days. Every converted figure must be able to carry the age of the rate behind it.
+date. Rate age is not a constant: it is computed client-side from the rate's
+`asOf` against the payload's `today`, in whole Cairo days — fresh 0 / dated 1–7 /
+stale 8+. The real rates were 16 days old, and therefore stale, on 2026-09-02.
+Every converted figure must be able to carry the age of the rate behind it.
 **A stale rate must never be able to pass as a current one.**
 
 **Snapshots** — 1 historical snapshot, one of whose figures was **never recorded**
@@ -215,6 +218,9 @@ The plan gives Home deliberately few, because almost nothing is writable yet.
   when the screen opens. On a revisit the screen renders **from cache first**, then
   reconciles against a fresh read. Perceived speed is a stated product
   requirement, so a blank screen waiting on the network is a failure state.
+  A failed cold read with no cache is a page state with one retry action, with
+  sign-out reachable. A failed reconcile keeps the cached screen and shows a
+  page state. Neither is a toast.
 - **Static: nothing is built into the app.** No card, name, balance, limit, or
   schedule is application-defined; all of it belongs to the household. The only
   fixed-shape element is the 21 year buckets, 2025–2045.
@@ -238,9 +244,10 @@ cards, installments, transactions, rates or snapshots, every figure zero, no nex
 due date, the 21 year buckets still present and all zero. **This is the first
 thing most new users ever see and it carries more weight than the fully populated
 state.** · the migrated household before the correction · the same household after
-it, where short-term liabilities rise by 600.00 and both net-worth figures fall by
-600.00 and nothing else moves · partially populated, which is today's reality: 56
-installments against 1 transaction.
+it: accounts 17→15, liabilities 7→9, short-term liabilities +600.00, both
+net-worth figures and the total of all −600.00, the ADIB card balance 600.00 ·
+partially populated, which is today's reality: 56 installments against 1
+transaction.
 
 **Role** — owner/admin see everything including the correction action · member may
 write cards but is refused the correction · **viewer is read-only and must be shown
