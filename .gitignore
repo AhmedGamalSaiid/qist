@@ -36,3 +36,6 @@ dist/
 .open-next/
 coverage/
 *.tsbuildinfo
+
+# Local browser-preview launch config
+.claude/launch.json
