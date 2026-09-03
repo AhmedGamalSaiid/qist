@@ -1,54 +1,45 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.0.0 → 2.0.0 (MAJOR)
+Version change: 2.0.0 → 3.0.0 (MAJOR)
 
-Bump rationale: Principles I and III are redefined in backward-incompatible
-ways. v1.0.0 required the Google Sheet to be the only canonical store and
-forbade any database or external backend; both were declared un-waivable. The
-project is migrating to Next.js on Cloudflare Workers with Cloudflare D1, which
-v1.0.0 prohibits outright. Principles II and VI are also redefined. This is the
-governance change that unblocks that migration.
+Bump rationale: Principle VII is redefined in a backward-incompatible way.
+The prior version fixed a spreadsheet-derived colour grammar (navy
+`#1F3864`, blue `#2E75B6`, yellow `#FFF2CC`, and status greens/ambers/reds) as
+the app's visual language; that palette is fully removed, not kept alongside
+the new text. Principle VII now specifies the frozen Emotex design system:
+dark-theme-only polarity, a governed component/token allowlist, structural
+rules for the Qist mark, type stack, numerals/direction/money formatting,
+hard-stop scope, and vendor-control overrides.
 
 Modified principles:
-  - I.   Sheet Is the Single Source of Truth  →  The Database Is the Single
-         Source of Truth
-  - II.  Formula Safety Is Absolute  →  Ledger Integrity Is Absolute
-  - III. No External Backend  →  Data Stays Under the Owner's Control
-  - VI.  Perceived Speed Over Actual Speed  →  Perceived Speed Is a Product
-         Decision (rationale replaced; discipline retained)
-  - VII. Visual Continuity With the Sheet  →  One Visual Language for
-         Editability (colour grammar retained; framing changed)
-  - VIII.Honest Scope (amended: offline is now a choice, not a platform limit)
+  - VII. One Visual Language for Editability  →  Visual Identity Is
+        Structural, Not Decorative (spreadsheet colour grammar replaced by
+        the governed Emotex system; framing changed from "editability
+        signal" to "structural product requirement")
 
-Unchanged principles: IV (Phone-First UX), V (Bilingual EN/AR With Real RTL)
+Unchanged principles: I–VI, VIII, IX, X
 
-Added sections:
-  - IX. Tenant Isolation Is Structural
-  - X.  No Cutover Without Proven Parity
+Added sections: none
 
 Removed sections: none
 
-Rewritten sections:
-  - Technology & Deployment Constraints (new stack)
-  - Development Workflow & Quality Gates (allowlist/sheet-safety gates replaced
-    by tenant-isolation, money-representation, parity and bundle-size gates)
-  - Governance (un-waivable set now I, II, III, IX)
+Rewritten sections: none (Technology & Deployment Constraints, Development
+Workflow & Quality Gates, and Governance are unaffected by this amendment)
 
 Templates status:
-  - .specify/templates/plan-template.md ✅ compatible — its Constitution Check
-    gate is dynamic ("Gates determined based on constitution file"); plans must
-    now gate against Principles I–X, especially I, II, III and IX
-  - .specify/templates/spec-template.md ✅ compatible (no principle references)
-  - .specify/templates/tasks-template.md ✅ compatible (no principle references)
+  - .specify/templates/plan-template.md ✅ compatible — Constitution Check
+    gate is dynamic and does not name Principle VII's prior colour values
+  - .specify/templates/spec-template.md ✅ compatible (no principle refs)
+  - .specify/templates/tasks-template.md ✅ compatible (no principle refs)
   - .specify/templates/checklist-template.md ✅ compatible (no principle refs)
 
 Historical note: specs/001-income-sheet-companion and
-specs/002-credit-card-planning were written and gated against v1.0.0 and cite
-principles by their v1.0.0 numbers and titles. Those documents are a record of
-the Apps Script application and are NOT retroactively amended. Principle
-numbers I–VIII were deliberately held stable to keep those citations legible;
-IX and X were appended rather than inserted.
+specs/002-credit-card-planning cite Principle VII under its v1.0.0 title
+("Visual Continuity With the Sheet") and are not retroactively amended.
+specs/004-multi-user-app and design/handoff/*.md already describe and
+implement the Emotex system this amendment formalizes — the amendment
+codifies existing, shipped practice rather than mandating new work.
 
 Follow-up TODOs: none
 -->
@@ -155,19 +146,64 @@ gone; Workers are fast. The discipline is kept anyway because instant response
 is a quality the app should have on its own merits, not a workaround — but the
 blanket prohibition on granular reads was a workaround, and it is lifted.
 
-### VII. One Visual Language for Editability
+### VII. Visual Identity Is Structural, Not Decorative
 
-The app uses a consistent colour grammar: navy `#1F3864` for headers and
-navigation, blue `#2E75B6` for accents, and yellow `#FFF2CC` marking every
-editable field. Installment status uses green `#E2EFDA` (paid), amber `#FFF3CD`
-(due), and red `#FCE4E4` (overdue). Read-only values MUST be visually distinct
-from editable ones everywhere in the app.
+**1. Polarity.** The product is dark-theme only. Light polarity never appears
+in any product surface. The `-ink` (dark-ink) logo variants exist for
+non-product surfaces only (documents, app-store, print) and MUST NEVER be
+referenced from product code.
 
-**Rationale**: This palette began as the spreadsheet's, and the owner reads it
-fluently — that fluency is worth preserving even though the sheet is no longer
-something they open. It is now the app's own design system rather than a mirror
-of another artifact. Its real work is making "what can I edit here?" answerable
-at a glance.
+**2. Design system.** Emotex is the Qist design system and is frozen: no
+redesign, no new colour system, no new type system. Additions are permitted
+only as named, rationale-carrying components or tokens proposed by design and
+approved by the product owner before implementation. Approved additions to
+date, implemented: components `StatusNotice`, `CodeToken`, `BrandLockup`;
+token `--font-mono` (JetBrains Mono 300/400). Further additions approved in
+the Home phase will be added to this list when their handoff spec lands in
+`design/handoff/`; nothing is implemented before it appears there. Code MUST
+NOT introduce a component or token that is not on this list.
+
+**3. The mark.** The Qist mark never mirrors, never recolours, never
+transforms, and is never reconstructed in code. It is excluded from any
+global RTL icon flip — layout mirrors in RTL, the mark does not. Floor is a
+32px symbol for lockups in both scripts; below 32px, symbol only, using the
+small variant (16–24px). The master symbol is never used below 32px. Arabic
+screens use the Arabic lockup. The bilingual lockup is marketing-only and
+never appears in product. `BrandLockup` is the only sanctioned way to place
+the mark and enforces these rules structurally (`dir=ltr`, `transform:none`,
+no flip prop); source of truth is `public/assets/logo/`.
+
+**4. Type.** Latin: display face Oxanium 200, UI face Poppins, per Emotex.
+Arabic UI face is Alexandria, status PENDING APPROVAL by the product owner;
+it is applied at the Arabic screen root by reassigning `--font-ui` and
+`--font-display` and setting `--ls-caps`, `--ls-label`, `--ls-heading` to
+zero. Noto Kufi Arabic appears in the logo only and never in UI copy. Arabic
+UI copy is written by a native Egyptian Arabic speaker, never machine-
+translated.
+
+**5. Numerals, direction, money.** Latin digits in both languages, always.
+Digits, amounts and dates are direction-isolated LTR inside Arabic; Arabic
+runs are isolated inside English. A money string is one isolated LTR run in
+both languages: two decimals, comma thousands, dot decimal, leading minus
+using U+2212 (never a hyphen), `EGP` code trailing. Only its position
+mirrors. Dates are `mm/dd/yyyy`. Gold and silver are shown in grams.
+Never-recorded (`null`) and zero MUST NEVER render the same. Formatting
+happens in one client-side helper; nothing arrives formatted from the
+server.
+
+**6. Scope.** "Not in plan" is a hard stop: a feature that is not in the plan
+is not a control, not a disabled control, not "coming soon", and not
+reserved space.
+
+**7. Vendor controls.** A vendor's brand guidelines (currently the Google
+sign-in button) override Emotex inside that control only. The control's
+position in the layout follows Qist rules; its interior follows the vendor.
+
+**Rationale**: The prior framing described the palette as inherited from the
+spreadsheet — the app's design system is now Emotex, a purpose-built and
+frozen system with its own governance for change, and the visual rules
+around it (polarity, the mark, type, numerals/direction/money, scope, vendor
+controls) are load-bearing product requirements, not aesthetic preference.
 
 ### VIII. Honest Scope
 
@@ -287,4 +323,4 @@ justification, and Principles I, II, III, and IX may not be waived.
 valid records of what was built under it. They are not retroactively amended,
 and their principle citations refer to the version current at the time.
 
-**Version**: 2.0.0 | **Ratified**: 2026-08-17 | **Last Amended**: 2026-08-27
+**Version**: 3.0.0 | **Ratified**: 2026-08-17 | **Last Amended**: 2026-09-03
